@@ -1,0 +1,65 @@
+env:
+  FLB_LOG_FILE: agf
+  STORAGE_PATH: aadfad
+  LOG_PATH: asgafdad
+  DB_PATH: agadfadsf
+  TAG: app
+  LOKI_HOST: agsdf
+  TENANT_ID: adfasdfa
+  TLS_CA_FILE: asdfasdgqe
+  TLS_CRT_FILE: asfasg
+  TLS_KEY_FILE: adfag
+
+service:
+  log_file: ${FLB_LOG_FILE}
+  log_level: error
+  scheduler.base: 5
+  scheduler.cap: 300
+  storage.path: ${STORAGE_PATH}
+  storage.checksum: on
+  storage.delete_irrecoverable_chunks: on
+
+parsers:
+  - name: test_json
+    format: json
+    time_key: ts
+    time_format: '%Y-%m-%dT%H:%M:%S%z'
+    time_keep: off
+    time_offset: +0800
+
+pipeline:
+  inputs:
+    - name: tail
+      tag: ${TAG}
+      path: ${LOG_PATH}
+      path_key: filename
+      db: ${DB_PATH}
+      skip_empty_lines: on
+      refresh_interval: 5
+      storage.type: filesystem
+      threaded: on
+
+  filters:
+    - name: parser
+      match: app
+      key_name: log
+      parser: test_json
+      reserve_data: on
+
+  outputs:
+    - name: loki
+      match: ${TAG}
+      host: ${LOKI_HOST}
+      port: 443
+      tenant_id: ${TENANT_ID}
+      labels: filename=$filename, instance=${HOSTNAME}
+      tls: on
+      tls.ca_file: ${TLS_CA_FILE}
+      tls.crt_file: ${TLS_CRT_FILE}
+      tls.key_file: ${TLS_KEY_FILE}
+      retry_limit: no_limits
+      storage.total_limit_size: 1G
+      net.connect_timeout: 310
+      net.keepalive_idle_timeout: 30
+      net.dns.resolver: ASYNC
+      workers: 2
