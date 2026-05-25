@@ -15,7 +15,7 @@ type UserInput struct {
 
 	// parser
 	EnableParser bool
-	ParserInput  parser.ParseInput
+	ParserInput  parser.ParserInput
 
 	// loki
 	LokiHost   string
@@ -27,10 +27,11 @@ type UserInput struct {
 
 // FluentBitConfig represents fluent-bit default config
 type FluentBitConfig struct {
-	Env      Env             `yaml:"env"`
-	Service  Service         `yaml:"service"`
-	Parsers  []parser.Parser `yaml:"parsers,omitempty"`
-	Pipeline Pipeline        `yaml:"pipeline"`
+	Env              Env                      `yaml:"env"`
+	Service          Service                  `yaml:"service"`
+	Parsers          []parser.Parser          `yaml:"parsers,omitempty"`
+	MultilineParsers []parser.MultilineParser `yaml:"multiline_parsers,omitempty"`
+	Pipeline         Pipeline                 `yaml:"pipeline"`
 }
 
 // Env represents environment variables
@@ -77,6 +78,8 @@ type TailInput struct {
 	Path    string `yaml:"path"`
 	PathKey string `yaml:"path_key"`
 	DB      string `yaml:"db"`
+
+	MultilineParser string `yaml:"multiline.parser,omitempty"`
 
 	SkipEmptyLines  string `yaml:"skip_empty_lines"`
 	RefreshInterval int    `yaml:"refresh_interval"`

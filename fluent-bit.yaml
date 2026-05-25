@@ -1,14 +1,14 @@
 env:
-  FLB_LOG_FILE: agf
-  STORAGE_PATH: aadfad
-  LOG_PATH: asgafdad
-  DB_PATH: agadfadsf
-  TAG: app
-  LOKI_HOST: agsdf
-  TENANT_ID: adfasdfa
-  TLS_CA_FILE: asdfasdgqe
-  TLS_CRT_FILE: asfasg
-  TLS_KEY_FILE: adfag
+  FLB_LOG_FILE: ljj;lkh;
+  STORAGE_PATH: asdfasgaf
+  LOG_PATH: agqwfadfa
+  DB_PATH: qwerfagfa
+  TAG: qrwgqsfasf
+  LOKI_HOST: asdgasf
+  TENANT_ID: qwefasdgva
+  TLS_CA_FILE: fqwefadsgfas
+  TLS_CRT_FILE: fqfasdfag
+  TLS_KEY_FILE: qfasdgfasdf
 
 service:
   log_file: ${FLB_LOG_FILE}
@@ -20,12 +20,24 @@ service:
   storage.delete_irrecoverable_chunks: on
 
 parsers:
-  - name: test_json
-    format: json
-    time_key: ts
-    time_format: '%Y-%m-%dT%H:%M:%S%z'
+  - name: parser_app
+    format: regex
+    regex: ^\[(?<timestamp>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\]\s+(?<level>[A-Z]+)\s+(?<message>.*)$
+    time_key: timestamp
+    time_format: '%Y-%m-%d %H:%M:%S'
     time_keep: off
-    time_offset: +0800
+
+multiline_parsers:
+  - name: multi_app
+    type: regex
+    flush_timeout: 1000
+    rules:
+      - state: start_state
+        regex: /^\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/
+        next_state: cont
+      - state: cont
+        regex: /^(?!\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}).*/
+        next_state: cont
 
 pipeline:
   inputs:
@@ -34,6 +46,7 @@ pipeline:
       path: ${LOG_PATH}
       path_key: filename
       db: ${DB_PATH}
+      multiline.parser: multi_app
       skip_empty_lines: on
       refresh_interval: 5
       storage.type: filesystem
@@ -43,7 +56,7 @@ pipeline:
     - name: parser
       match: app
       key_name: log
-      parser: test_json
+      parser: parser_app
       reserve_data: on
 
   outputs:

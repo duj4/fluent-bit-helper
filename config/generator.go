@@ -19,22 +19,36 @@ func Build(userInput UserInput) (FluentBitConfig, error) {
 
 		Pipeline: Pipeline{
 			Inputs: []interface{}{
-				buildTailInput(),
+				buildTailInput(userInput),
 			},
 		},
 	}
 
 	// build parser/filter if enabled
 	if userInput.EnableParser {
-
 		parserObj, err := parser.BuildParser(userInput.ParserInput)
 		if err != nil {
 			return FluentBitConfig{}, err
 		}
 
-		cfg.Parsers = append(cfg.Parsers, parserObj)
+		cfg.Parsers = []parser.Parser{
+			parserObj,
+		}
+
+		filterObj := parser.BuildFilter(userInput.ParserInput)
 		cfg.Pipeline.Filters = []interface{}{
-			parser.BuildFilter(userInput.ParserInput),
+			filterObj,
+		}
+
+		if userInput.ParserInput.EnableMultiline {
+			multilineParserObj, err := parser.BuildMultilineParser(userInput.ParserInput)
+			if err != nil {
+				return FluentBitConfig{}, err
+			}
+
+			cfg.MultilineParsers = []parser.MultilineParser{
+				multilineParserObj,
+			}
 		}
 	}
 
@@ -91,8 +105,8 @@ func buildService() Service {
 	}
 }
 
-func buildTailInput() TailInput {
-	return TailInput{
+func buildTailInput(userInput UserInput) TailInput {
+	tailInput := TailInput{
 		Name: "tail",
 
 		Tag:     "${TAG}",
@@ -105,6 +119,12 @@ func buildTailInput() TailInput {
 		StorageType:     "filesystem",
 		Threaded:        "on",
 	}
+
+	if userInput.EnableParser && userInput.ParserInput.EnableMultiline {
+		tailInput.MultilineParser = userInput.ParserInput.MultilineParserName
+	}
+
+	return tailInput
 }
 
 func buildStdoutOutput() StdoutOutput {
@@ -157,6 +177,7 @@ func ToYAML(cfg FluentBitConfig) ([]byte, error) {
 	// format yaml section spacing
 	output = strings.ReplaceAll(output, "\nservice:", "\n\nservice:")
 	output = strings.ReplaceAll(output, "\nparsers:", "\n\nparsers:")
+	output = strings.ReplaceAll(output, "\nmultiline_parsers:", "\n\nmultiline_parsers:")
 	output = strings.ReplaceAll(output, "\npipeline:", "\n\npipeline:")
 	output = strings.ReplaceAll(output, "\n  filters:", "\n\n  filters:")
 	output = strings.ReplaceAll(output, "\n  outputs:", "\n\n  outputs:")

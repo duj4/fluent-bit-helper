@@ -20,7 +20,6 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Interactively generate a Fluent-Bit YAML config",
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		userInput, err := collectUserInput()
 		if err != nil {
 			return err
@@ -58,56 +57,51 @@ func collectUserInput() (config.UserInput, error) {
 	var userInput config.UserInput
 	var logPathsText string
 
-	// collect basic fields
-	fields := []huh.Field{
-		huh.NewInput().
-			Title("Fluent-Bit's own log file").
-			Description("Example: /d/d1/app/fluent-bit/log/fluent-bit.log").
-			Value(&userInput.FluentBitLogFile).
-			Validate(required),
-
-		huh.NewInput().
-			Title("Diretory path for filesystem buffering").
-			Description("Example: /d/d1/app/fluent-bit/data/storage/").
-			Value(&userInput.StoragePath).
-			Validate(required),
-
-		huh.NewText().
-			Title("Fluent-Bit monitored log path(s)").
-			Description("One path per line, example:\n/d/d1/app/log/app.log\n/d/d1/app/log/access.log").
-			Value(&logPathsText).
-			Validate(required),
-
-		huh.NewInput().
-			Title("Absolute path of database file to keep track of monitored file(s) and offsets.").
-			Description("Example: /d/d1/app/fluent-bit/data/database/app.db, parent folder must exist in prior").
-			Value(&userInput.DBPath).
-			Validate(required),
-
-		huh.NewInput().
-			Title("Tag for pipeline routing").
-			Description("Example: app").
-			Value(&userInput.Tag).
-			Validate(required),
-
-		huh.NewSelect[string]().
-			Title("Output destination").
-			Options(
-				huh.NewOption("stdout", "stdout"),
-				huh.NewOption("loki", "loki"),
-			).
-			Value(&userInput.Output),
-
-		huh.NewConfirm().
-			Title("Enable parser/filter configuration?").
-			Description("Generate parser and parser filter sections").
-			Value(&userInput.EnableParser),
-	}
-
-	// basic form with stdout output
+	// basic form
 	form := huh.NewForm(
 		huh.NewGroup(
-			fields...,
+			huh.NewInput().
+				Title("Fluent-Bit's own log file").
+				Description("Example: /d/d1/app/fluent-bit/log/fluent-bit.log").
+				Value(&userInput.FluentBitLogFile).
+				Validate(required),
+
+			huh.NewInput().
+				Title("Diretory path for filesystem buffering").
+				Description("Example: /d/d1/app/fluent-bit/data/storage/").
+				Value(&userInput.StoragePath).
+				Validate(required),
+
+			huh.NewText().
+				Title("Fluent-Bit monitored log path(s)").
+				Description("One path per line, example:\n/d/d1/app/log/app.log\n/d/d1/app/log/access.log").
+				Value(&logPathsText).
+				Validate(required),
+
+			huh.NewInput().
+				Title("Absolute path of database file to keep track of monitored file(s) and offsets.").
+				Description("Example: /d/d1/app/fluent-bit/data/database/app.db, parent folder must exist in prior").
+				Value(&userInput.DBPath).
+				Validate(required),
+
+			huh.NewInput().
+				Title("Tag for pipeline routing").
+				Description("Example: app").
+				Value(&userInput.Tag).
+				Validate(required),
+
+			huh.NewConfirm().
+				Title("Enable parser/filter configuration?").
+				Description("Generate parser and parser filter sections").
+				Value(&userInput.EnableParser),
+
+			huh.NewSelect[string]().
+				Title("Output destination").
+				Options(
+					huh.NewOption("stdout", "stdout"),
+					huh.NewOption("loki", "loki"),
+				).
+				Value(&userInput.Output),
 		),
 	)
 
@@ -117,8 +111,7 @@ func collectUserInput() (config.UserInput, error) {
 
 	// collect parser input
 	if userInput.EnableParser {
-
-		parserInput, err := CollectInput()
+		parserInput, err := CollectParserInput()
 		if err != nil {
 			return userInput, err
 		}

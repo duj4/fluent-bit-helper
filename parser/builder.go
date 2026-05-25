@@ -1,7 +1,9 @@
 package parser
 
+import "fmt"
+
 // BuildParser builds Fluent-Bit parser config from user input
-func BuildParser(input ParseInput) (Parser, error) {
+func BuildParser(input ParserInput) (Parser, error) {
 	timeFormat, err := InferTimeFormat(input.TimeValue)
 	if err != nil {
 		return Parser{}, err
@@ -23,11 +25,24 @@ func BuildParser(input ParseInput) (Parser, error) {
 		p.TimeOffset = "+0800"
 	}
 
-	return p, nil
+	switch input.Format {
+	case "json":
+		return p, nil
+	case "regex":
+		regex, err := InferRegex(input.Snippet, input.RegexFields)
+		if err != nil {
+			return Parser{}, err
+		}
+		p.Regex = regex
+
+		return p, nil
+	default:
+		return Parser{}, fmt.Errorf("unsupported parser format: %s", input.Format)
+	}
 }
 
 // BuildFilter builds Fluent-Bit parser filter config from user input
-func BuildFilter(input ParseInput) Filter {
+func BuildFilter(input ParserInput) Filter {
 	return Filter{
 		Name:        "parser",
 		Match:       input.Match,
