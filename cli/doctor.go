@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -24,7 +23,7 @@ var doctorCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		doctorFile := args[0]
 
-		content, err := ioutil.ReadFile(doctorFile)
+		content, err := os.ReadFile(doctorFile)
 		if err != nil {
 			return err
 		}
@@ -274,7 +273,7 @@ func checkEqual(name string, got, expected interface{}) {
 	if got != expected {
 		fmt.Printf("[%s] %s should be %v\n", severity(name), name, expected)
 	} else {
-		fmt.Printf("[OK] %s = %v\n", name, expected)
+		fmt.Printf("[OK] %s = %v\n", name, got)
 	}
 }
 
