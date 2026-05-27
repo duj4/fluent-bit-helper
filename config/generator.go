@@ -15,7 +15,7 @@ func Build(userInput UserInput) (FluentBitConfig, error) {
 	cfg := FluentBitConfig{
 		Env: buildBaseEnv(userInput),
 
-		Service: buildService(),
+		Service: buildService(userInput),
 
 		Pipeline: Pipeline{
 			Inputs: []interface{}{
@@ -91,18 +91,23 @@ func buildLokiEnv(env Env, userInput UserInput) Env {
 	return env
 }
 
-func buildService() Service {
-	return Service{
-		LogFile:  "${FLB_LOG_FILE}",
+func buildService(userInput UserInput) Service {
+	service := Service{
 		LogLevel: "error",
 
 		SchedulerBase: 5,
 		SchedulerCap:  300,
 
 		StoragePath:                      "${STORAGE_PATH}",
-		StorageChecksum:                  "on",
+		StorageSync:                      "full",
 		StorageDeleteIrrecoverableChunks: "on",
 	}
+
+	if userInput.FluentBitLogFile != "" {
+		service.LogFile = "${FLB_LOG_FILE}"
+	}
+
+	return service
 }
 
 func buildTailInput(userInput UserInput) TailInput {
@@ -112,12 +117,19 @@ func buildTailInput(userInput UserInput) TailInput {
 		Tag:     "${TAG}",
 		Path:    "${LOG_PATH}",
 		PathKey: "filename",
-		DB:      "${DB_PATH}",
 
 		SkipEmptyLines:  "on",
 		RefreshInterval: 5,
 		StorageType:     "filesystem",
 		Threaded:        "on",
+	}
+
+	if userInput.DBPath != "" {
+		tailInput.DB = "${DB_PATH}"
+	}
+
+	if userInput.ReadFromHead {
+		tailInput.ReadFromHead = "on"
 	}
 
 	if userInput.EnableParser && userInput.ParserInput.EnableMultiline {

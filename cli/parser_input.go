@@ -9,7 +9,7 @@ import (
 )
 
 // CollectInput collects parser input from user
-func CollectParserInput() (parser.ParserInput, error) {
+func CollectParserInput(inputTag string) (parser.ParserInput, error) {
 	input := parser.ParserInput{}
 
 	if err := collectFormat(&input); err != nil {
@@ -36,7 +36,7 @@ func CollectParserInput() (parser.ParserInput, error) {
 		}
 	}
 
-	if err := collectCommonParserInput(&input); err != nil {
+	if err := collectCommonParserInput(&input, inputTag); err != nil {
 		return input, err
 	}
 
@@ -47,6 +47,8 @@ func CollectParserInput() (parser.ParserInput, error) {
 func collectFormat(input *parser.ParserInput) error {
 	form := huh.NewForm(
 		huh.NewGroup(
+			sectionNote("Parser - Select log format for parsing"),
+
 			huh.NewSelect[string]().
 				Title("Log format").
 				Description("JSON parses structured logs, regex parses plain text logs by generated regular expression").
@@ -65,6 +67,8 @@ func collectFormat(input *parser.ParserInput) error {
 func collectJSONParserInput(input *parser.ParserInput) error {
 	form := huh.NewForm(
 		huh.NewGroup(
+			sectionNote("Parser - JSON log timestamp settings"),
+
 			huh.NewInput().
 				Title("Original timestamp key").
 				Description("Example: timestamp, ts").
@@ -83,9 +87,11 @@ func collectJSONParserInput(input *parser.ParserInput) error {
 }
 
 // collectCommonParserInput collects common parser and filter input from user
-func collectCommonParserInput(input *parser.ParserInput) error {
+func collectCommonParserInput(input *parser.ParserInput, inputTag string) error {
 	form := huh.NewForm(
 		huh.NewGroup(
+			sectionNote("Parser - Common parser settings"),
+
 			huh.NewSelect[string]().
 				Title("Original log timezone").
 				Description("Select the timezone used in the original log").
@@ -101,11 +107,15 @@ func collectCommonParserInput(input *parser.ParserInput) error {
 				Value(&input.ParserName).
 				Validate(required),
 
-			huh.NewInput().
+			sectionNote("Filter - Parser filter settings"),
+
+			huh.NewSelect[string]().
 				Title("Filter match").
-				Description("Match pattern for parser filter, for example: app, app.*, ${TAG}").
-				Value(&input.Match).
-				Validate(required),
+				Description("Select the tag matched by this parser filter:").
+				Options(
+					huh.NewOption(inputTag, inputTag),
+				).
+				Value(&input.Match),
 
 			huh.NewInput().
 				Title("Filter key_name").
@@ -122,6 +132,8 @@ func collectCommonParserInput(input *parser.ParserInput) error {
 func collectRegexInput(input *parser.ParserInput) error {
 	regexForm := huh.NewForm(
 		huh.NewGroup(
+			sectionNote("Parser - Regex field extraction"),
+
 			huh.NewText().
 				Title("Log snippet").
 				Description("Paste one single-line log example").
@@ -139,19 +151,25 @@ func collectRegexInput(input *parser.ParserInput) error {
 		var value string
 		var addAnother bool
 
+		fieldIndex := len(input.RegexFields) + 1
+
 		fieldForm := huh.NewForm(
 			huh.NewGroup(
+				huh.NewNote().
+					Title(fmt.Sprintf("Log snippet - field %d", fieldIndex)).
+					Description(formatSnippetNote(input.Snippet, input.RegexFields)),
+
 				huh.NewInput().
 					Title("Field key").
 					Description("Example: timestamp, level, message, logger").
 					Value(&key).
-					Validate(required),
+					Validate(validateRegexFieldKey(input.RegexFields)),
 
 				huh.NewInput().
 					Title("Field value").
 					Description("Exact value as it appears in the log snippet").
 					Value(&value).
-					Validate(required),
+					Validate(validateRegexFieldValue(input.Snippet, &key)),
 
 				huh.NewConfirm().
 					Title("Add another field?").
@@ -174,6 +192,91 @@ func collectRegexInput(input *parser.ParserInput) error {
 	}
 
 	return nil
+}
+
+// formatSnippetNote formats log snippet and added fields for display
+func formatSnippetNote(snippet string, fields []parser.RegexField) string {
+	return fmt.Sprintf(
+		"Raw log snippet:\n%s\n\n\n%s",
+		escapeNoteText(snippet),
+		formatRegexFields(fields),
+	)
+}
+
+// escapeNoteText escapes characters that may be interpreted by huh note rendering
+func escapeNoteText(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "_", "\\_")
+	s = strings.ReplaceAll(s, "*", "\\*")
+	s = strings.ReplaceAll(s, "`", "\\`")
+
+	return s
+}
+
+// formatRegexFields formats already added regex fields
+func formatRegexFields(fields []parser.RegexField) string {
+	if len(fields) == 0 {
+		return "Added fields: none"
+	}
+
+	var builder strings.Builder
+
+	builder.WriteString("Added fields: \n")
+
+	for _, field := range fields {
+		builder.WriteString("- ")
+		builder.WriteString(escapeNoteText(field.Key))
+		builder.WriteString(" = ")
+		builder.WriteString(escapeNoteText(field.Value))
+		builder.WriteString("\n")
+	}
+
+	return strings.TrimSpace(builder.String())
+}
+
+// validateRegexFieldValue validates that field value exists in log snippet
+func validateRegexFieldValue(snippet string, key *string) func(string) error {
+	return func(value string) error {
+		value = strings.TrimSpace(value)
+
+		if value == "" {
+			return fmt.Errorf("required")
+		}
+
+		fieldKey := strings.TrimSpace(*key)
+		if fieldKey == "" {
+			fieldKey = "field"
+		}
+
+		if !strings.Contains(snippet, value) {
+			return fmt.Errorf("value for field %q not found in log snippet", fieldKey)
+		}
+
+		if strings.Count(snippet, value) > 1 {
+			return fmt.Errorf("value for field %q appears multiple times in log snippet", fieldKey)
+		}
+
+		return nil
+	}
+}
+
+// validateRegexFieldKey validates regex field key
+func validateRegexFieldKey(existingFields []parser.RegexField) func(string) error {
+	return func(key string) error {
+		key = strings.TrimSpace(key)
+
+		if key == "" {
+			return fmt.Errorf("required")
+		}
+
+		for _, field := range existingFields {
+			if field.Key == key {
+				return fmt.Errorf("field key %q already exists", key)
+			}
+		}
+
+		return nil
+	}
 }
 
 // collectRegexTimestampInput collects timestamp field from regex fields
@@ -222,6 +325,8 @@ func collectRegexTimestampInput(input *parser.ParserInput) error {
 func collectMultlineInput(input *parser.ParserInput) error {
 	form := huh.NewForm(
 		huh.NewGroup(
+			sectionNote("Multiline Parser - Optional multiline parser settings"),
+
 			huh.NewConfirm().
 				Title("Enable multiline_parser?").
 				Description("Use timestamp-start rule to merge stack trace or multiline logs").

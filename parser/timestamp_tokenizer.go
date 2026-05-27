@@ -5,7 +5,7 @@ import "regexp"
 var (
 	// Support timezone format like: Z, z, +08:00, -06:00, +0800, -0600
 	reTimezone    = regexp.MustCompile(`^(Z|z|[+-]\d{2}:?\d{2})`)
-	reMillisecond = regexp.MustCompile(`^\.\d+`)
+	reMillisecond = regexp.MustCompile(`^[\.,]\d+`)
 	reNumber      = regexp.MustCompile(`^\d+`)
 )
 

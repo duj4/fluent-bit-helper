@@ -11,6 +11,8 @@ var rootCmd = &cobra.Command{
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd: true,
 	},
+
+	SilenceUsage: true,
 }
 
 // Execute executes the root command.

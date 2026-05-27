@@ -60,7 +60,11 @@ func InferTimeFormat(value string) (string, error) {
 
 		// millisecond
 		case "millisecond":
-			builder.WriteString(".%L")
+			if strings.HasPrefix(token.Value, ",") {
+				builder.WriteString(",%L")
+			} else {
+				builder.WriteString(".%L")
+			}
 
 		// timezone
 		case "timezone":

@@ -66,7 +66,7 @@ func checkService(service config.Service) {
 	checkPathString("storage.path", service.StoragePath, "storing the buffered log chunks when storage.type in input is set as \"filesystem\"")
 
 	// storage.checksum
-	checkEqual("storage.checksum", service.StorageChecksum, "on")
+	checkEqual("storage.sync", service.StorageSync, "full")
 
 	// storage.delete_irrecoverable_chunks
 	checkEqual("storage.delete_irrecoverable_chunks", service.StorageDeleteIrrecoverableChunks, "on")

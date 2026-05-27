@@ -4,12 +4,15 @@ import "flbctl/parser"
 
 // UserInput represents user input
 type UserInput struct {
+	Mode string
+
 	FluentBitLogFile string
 	StoragePath      string
 
-	LogPaths []string
-	DBPath   string
-	Tag      string
+	LogPaths     []string
+	DBPath       string
+	ReadFromHead bool
+	Tag          string
 
 	Output string
 
@@ -36,11 +39,11 @@ type FluentBitConfig struct {
 
 // Env represents environment variables
 type Env struct {
-	FLBLogFile  string `yaml:"FLB_LOG_FILE"`
+	FLBLogFile  string `yaml:"FLB_LOG_FILE,omitempty"`
 	StoragePath string `yaml:"STORAGE_PATH"`
 
 	LogPath string `yaml:"LOG_PATH"`
-	DBPath  string `yaml:"DB_PATH"`
+	DBPath  string `yaml:"DB_PATH,omitempty"`
 	Tag     string `yaml:"TAG"`
 
 	LokiHost   string `yaml:"LOKI_HOST,omitempty"`
@@ -52,14 +55,14 @@ type Env struct {
 
 // Service represents service configuration
 type Service struct {
-	LogFile  string `yaml:"log_file"`
+	LogFile  string `yaml:"log_file,omitempty"`
 	LogLevel string `yaml:"log_level"`
 
 	SchedulerBase int `yaml:"scheduler.base"`
 	SchedulerCap  int `yaml:"scheduler.cap"`
 
 	StoragePath                      string `yaml:"storage.path"`
-	StorageChecksum                  string `yaml:"storage.checksum"`
+	StorageSync                      string `yaml:"storage.sync"`
 	StorageDeleteIrrecoverableChunks string `yaml:"storage.delete_irrecoverable_chunks"`
 }
 
@@ -74,10 +77,11 @@ type Pipeline struct {
 type TailInput struct {
 	Name string `yaml:"name"`
 
-	Tag     string `yaml:"tag"`
-	Path    string `yaml:"path"`
-	PathKey string `yaml:"path_key"`
-	DB      string `yaml:"db"`
+	Tag          string `yaml:"tag"`
+	Path         string `yaml:"path"`
+	PathKey      string `yaml:"path_key"`
+	DB           string `yaml:"db,omitempty"`
+	ReadFromHead string `yaml:"read_from_head,omitempty"`
 
 	MultilineParser string `yaml:"multiline.parser,omitempty"`
 

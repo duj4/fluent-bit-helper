@@ -34,7 +34,7 @@ type fieldMatch struct {
 // output:
 //
 //	^(?<timestamp>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+(?<level>[A-Z]+)\s+\[(?<thread>[^\]]+)\]\s+(?<logger>\S+)\s+\-\s+(?<message>.*)$
-func InferRegex(snippet string, fields []RegexField) (string, error) {
+func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (string, error) {
 	if strings.TrimSpace(snippet) == "" {
 		return "", errors.New("snippet is empty")
 	}
@@ -89,6 +89,8 @@ func InferRegex(snippet string, fields []RegexField) (string, error) {
 	cursor := 0
 
 	for _, match := range matches {
+		isLastField := match.End == len(snippet)
+
 		// Fixed text before this field.
 		prefix := snippet[cursor:match.Start]
 		builder.WriteString(renderLiteral(prefix))
@@ -101,6 +103,12 @@ func InferRegex(snippet string, fields []RegexField) (string, error) {
 		builder.WriteString(")")
 
 		cursor = match.End
+
+		// For multiline logs, consume the final newline outside the capture group
+		// This keeps message clean while still matching the full multiline record
+		if enableMultiline && isLastField {
+			builder.WriteString(`\n`)
+		}
 	}
 
 	// Fixed text after last field.
@@ -205,7 +213,7 @@ func inferValuePattern(key string, value string, isLast bool) string {
 		return `\d+(?:\.\d+)?`
 
 	case strings.Contains(lowerKey, "message") || strings.Contains(lowerKey, "msg"):
-		return `.*`
+		return `[\s\S]*`
 
 	case isLast:
 		// Last field is often message-like.
@@ -252,7 +260,11 @@ func inferTimestampRegex(value string) string {
 			numberIndex++
 
 		case "millisecond":
-			builder.WriteString(`\.\d+`)
+			if strings.HasPrefix(token.Value, ",") {
+				builder.WriteString(`,\d+`)
+			} else {
+				builder.WriteString(`\.\d+`)
+			}
 
 		case "timezone":
 			builder.WriteString(`(?:Z|z|[+-]\d{2}:?\d{2})`)

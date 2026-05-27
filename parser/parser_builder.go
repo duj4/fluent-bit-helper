@@ -3,33 +3,33 @@ package parser
 import "fmt"
 
 // BuildParser builds Fluent-Bit parser config from user input
-func BuildParser(input ParserInput) (Parser, error) {
-	timeFormat, err := InferTimeFormat(input.TimeValue)
+func BuildParser(userInput ParserInput) (Parser, error) {
+	timeFormat, err := InferTimeFormat(userInput.TimeValue)
 	if err != nil {
 		return Parser{}, err
 	}
 
 	p := Parser{
-		Name:       input.ParserName,
-		Format:     input.Format,
-		TimeKey:    input.TimeKey,
+		Name:       userInput.ParserName,
+		Format:     userInput.Format,
+		TimeKey:    userInput.TimeKey,
 		TimeFormat: timeFormat,
 		TimeKeep:   "off",
 	}
 
 	// only non-GMT timezone needs time_offset, by far it supports GMT+8 only
-	switch input.Timezone {
+	switch userInput.Timezone {
 	case "GMT":
 		// do nothing
 	case "GMT+8":
 		p.TimeOffset = "+0800"
 	}
 
-	switch input.Format {
+	switch userInput.Format {
 	case "json":
 		return p, nil
 	case "regex":
-		regex, err := InferRegex(input.Snippet, input.RegexFields)
+		regex, err := InferRegex(userInput.Snippet, userInput.RegexFields, userInput.EnableMultiline)
 		if err != nil {
 			return Parser{}, err
 		}
@@ -37,17 +37,17 @@ func BuildParser(input ParserInput) (Parser, error) {
 
 		return p, nil
 	default:
-		return Parser{}, fmt.Errorf("unsupported parser format: %s", input.Format)
+		return Parser{}, fmt.Errorf("unsupported parser format: %s", userInput.Format)
 	}
 }
 
 // BuildFilter builds Fluent-Bit parser filter config from user input
-func BuildFilter(input ParserInput) Filter {
+func BuildFilter(userInput ParserInput) Filter {
 	return Filter{
 		Name:        "parser",
-		Match:       input.Match,
-		KeyName:     input.KeyName,
-		Parser:      input.ParserName,
+		Match:       userInput.Match,
+		KeyName:     userInput.KeyName,
+		Parser:      userInput.ParserName,
 		ReserveData: "on",
 	}
 }
