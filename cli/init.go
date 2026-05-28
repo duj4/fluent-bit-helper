@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"flbctl/config"
@@ -102,6 +103,10 @@ func collectUserInput() (config.UserInput, error) {
 	}
 
 	if userInput.Output == "loki" {
+		if err := collectLokiLabelInput(&userInput); err != nil {
+			return userInput, err
+		}
+
 		if err := collectLokiOutputInput(&userInput); err != nil {
 			return userInput, err
 		}
@@ -242,6 +247,182 @@ func collectOutputInput(userInput *config.UserInput) error {
 	return form.Run()
 }
 
+// collectLokiLabelInput collects optional Loki labels from parser fields.
+func collectLokiLabelInput(userInput *config.UserInput) error {
+	if !userInput.EnableParser {
+		return nil
+	}
+
+	switch userInput.ParserInput.Format {
+	case "json":
+		return collectJSONLokiLabelNotice()
+
+	case "regex":
+		return collectRegexLokiLabelInput(userInput)
+
+	default:
+		return nil
+	}
+}
+
+// collectJSONLokiLabelNotice shows Loki label notice for JSON parser.
+func collectJSONLokiLabelNotice() error {
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewNote().
+				Title("JSON parser detected").
+				Description("Default labels filename and instance will be used. Add JSON fields as labels manually after generation if needed"),
+		),
+	)
+
+	return form.Run()
+}
+
+// collectRegexLokiLabelInput collects optional Loki labels from regex parser fields.
+func collectRegexLokiLabelInput(userInput *config.UserInput) error {
+	options := make([]huh.Option[string], 0, len(userInput.ParserInput.RegexFields))
+
+	for _, field := range userInput.ParserInput.RegexFields {
+		key := strings.TrimSpace(field.Key)
+		if key == "" {
+			continue
+		}
+
+		options = append(options, huh.NewOption(key, key))
+	}
+
+	if len(options) == 0 {
+		return nil
+	}
+
+	for {
+		options := buildAvailableLokiLabelFieldOptions(userInput)
+		if len(options) == 0 {
+			return nil
+		}
+
+		var addLabel bool
+
+		addForm := huh.NewForm(
+			huh.NewGroup(
+				sectionNote("Output - Loki labels"),
+
+				huh.NewNote().
+					Title("Current Loki labels").
+					Description(formatLokiLabels(userInput.LokiLabels)),
+
+				huh.NewConfirm().
+					Title("Add additional Loki label?").
+					Description("filename and instance are always included. Choose stable fields like level/service/component. Avoid unique fields like timestamp/message/trace_id/request_id/user_id").
+					Value(&addLabel),
+			),
+		)
+
+		if err := addForm.Run(); err != nil {
+			return err
+		}
+
+		if !addLabel {
+			break
+		}
+
+		var field string
+		var labelName string
+
+		labelForm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewNote().
+					Title("Current Loki labels").
+					Description(formatLokiLabels(userInput.LokiLabels)),
+
+				huh.NewSelect[string]().
+					Title("Parser field").
+					Description("Select the extracted field used as Loki label value").
+					Options(options...).
+					Value(&field),
+
+				huh.NewInput().
+					Title("Loki label name").
+					Description("Example: level, service, component, username").
+					Value(&labelName).
+					Validate(validateLokiLabelName(userInput.LokiLabels)),
+			),
+		)
+
+		if err := labelForm.Run(); err != nil {
+			return err
+		}
+
+		userInput.LokiLabels = append(userInput.LokiLabels, config.LokiLabel{
+			Name:  strings.TrimSpace(labelName),
+			Field: strings.TrimSpace(field),
+		})
+	}
+
+	return nil
+}
+
+func buildAvailableLokiLabelFieldOptions(userInput *config.UserInput) []huh.Option[string] {
+	usedFields := make(map[string]struct{})
+
+	for _, label := range userInput.LokiLabels {
+		field := strings.TrimSpace(label.Field)
+		if field != "" {
+			usedFields[field] = struct{}{}
+		}
+	}
+
+	options := make([]huh.Option[string], 0, len(userInput.ParserInput.RegexFields))
+
+	for _, field := range userInput.ParserInput.RegexFields {
+		key := strings.TrimSpace(field.Key)
+		if key == "" {
+			continue
+		}
+
+		if _, used := usedFields[key]; used {
+			continue
+		}
+
+		options = append(options, huh.NewOption(key, key))
+	}
+
+	return options
+}
+
+// formatLokiLabels formats default and already added Loki labels.
+func formatLokiLabels(labels []config.LokiLabel) string {
+	var builder strings.Builder
+
+	builder.WriteString("Default Loki labels:\n")
+	builder.WriteString("- filename = $filename\n")
+	builder.WriteString("- instance = ${HOSTNAME}\n")
+
+	if len(labels) == 0 {
+		builder.WriteString("\nAdditional Loki labels: none")
+		return builder.String()
+	}
+
+	builder.WriteString("\nAdditional Loki labels:\n")
+
+	for _, label := range labels {
+		name := strings.TrimSpace(label.Name)
+		field := strings.TrimSpace(label.Field)
+
+		if name == "" || field == "" {
+			continue
+		}
+
+		builder.WriteString("- ")
+		builder.WriteString(name)
+		builder.WriteString(" = $")
+		builder.WriteString(field)
+		builder.WriteString("\n")
+	}
+
+	return strings.TrimSpace(builder.String())
+}
+
 // collectLokiOutputInput collects Loki output related input
 func collectLokiOutputInput(userInput *config.UserInput) error {
 	form := huh.NewForm(
@@ -312,4 +493,32 @@ func normalizePaths(raw string) []string {
 	}
 
 	return paths
+}
+
+// validateLokiLabelName validates the label name is allowed
+func validateLokiLabelName(existingLabels []config.LokiLabel) func(string) error {
+	return func(v string) error {
+		v = strings.TrimSpace(v)
+
+		if v == "" {
+			return errors.New("required")
+		}
+
+		matched, err := regexp.MatchString(`^[a-zA-Z_][a-zA-Z0-9_]*$`, v)
+		if err != nil {
+			return err
+		}
+
+		if !matched {
+			return errors.New("label name must start with a letter or underscore and contain only letters, numbers and underscores")
+		}
+
+		for _, label := range existingLabels {
+			if label.Name == v {
+				return fmt.Errorf("label name %q already exists", v)
+			}
+		}
+
+		return nil
+	}
 }

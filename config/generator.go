@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -57,7 +58,7 @@ func Build(userInput UserInput) (FluentBitConfig, error) {
 		cfg.Env = buildLokiEnv(cfg.Env, userInput)
 
 		cfg.Pipeline.Outputs = []interface{}{
-			buildLokiOutput(),
+			buildLokiOutput(userInput),
 		}
 
 		return cfg, nil
@@ -146,7 +147,7 @@ func buildStdoutOutput() StdoutOutput {
 	}
 }
 
-func buildLokiOutput() LokiOutput {
+func buildLokiOutput(userInput UserInput) LokiOutput {
 	return LokiOutput{
 		Name:  "loki",
 		Match: "${TAG}",
@@ -154,7 +155,7 @@ func buildLokiOutput() LokiOutput {
 		Host:     "${LOKI_HOST}",
 		Port:     443,
 		TenantID: "${TENANT_ID}",
-		Labels:   "filename=$filename, instance=${HOSTNAME}",
+		Labels:   buildLokiLabels(userInput),
 
 		TLS:        "on",
 		TLSCAFile:  "${TLS_CA_FILE}",
@@ -171,6 +172,26 @@ func buildLokiOutput() LokiOutput {
 
 		Workers: 2,
 	}
+}
+
+func buildLokiLabels(userInput UserInput) string {
+	labels := []string{
+		"filename=$filename",
+		"instance=${HOSTNAME}",
+	}
+
+	for _, label := range userInput.LokiLabels {
+		name := strings.TrimSpace(label.Name)
+		field := strings.TrimSpace(label.Field)
+
+		if name == "" || field == "" {
+			continue
+		}
+
+		labels = append(labels, fmt.Sprintf("%s=$%s", name, field))
+	}
+
+	return strings.Join(labels, ", ")
 }
 
 // ToYAML renders FluentBitConfig into YAML.

@@ -26,6 +26,13 @@ type UserInput struct {
 	TLSCAFile  string
 	TLSCrtFile string
 	TLSKeyFile string
+	LokiLabels []LokiLabel
+}
+
+// LokiLabel represents one Loki label mapping
+type LokiLabel struct {
+	Name  string
+	Field string
 }
 
 // FluentBitConfig represents fluent-bit default config
