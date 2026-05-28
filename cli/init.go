@@ -136,15 +136,17 @@ func collectServiceInput(userInput *config.UserInput) error {
 	}
 
 	if userInput.Mode == "production" {
-		fields = append(fields,
+		fields = append(
+			fields,
 			huh.NewInput().
 				Title("Fluent-Bit's own log file").
-				Description("Example: /d/d1/app/fluent-bit/log/fluent-bit.log\nRecommended for production to persist Fluent-Bit's own runtime logs. Please configure logrotate separately.").
+				Description("Example: /d/d1/app/fluent-bit/log/fluent-bit.log\nRecommended for production and configure logrotate separately").
 				Value(&userInput.FluentBitLogFile),
 		)
 	}
 
-	fields = append(fields,
+	fields = append(
+		fields,
 		huh.NewInput().
 			Title("Filesystem buffering directory").
 			Description("Example: /d/d1/app/fluent-bit/data/storage/  Must already exist.").
@@ -172,15 +174,16 @@ func collectTailInput(userInput *config.UserInput, logPathsText *string) error {
 	}
 
 	if userInput.Mode == "production" {
-		fields = append(fields,
+		fields = append(
+			fields,
 			huh.NewInput().
 				Title("Tail offset database file").
-				Description("Example: /d/d1/app/fluent-bit/data/database/\nRecommended for production to persist file offsets across restarts. The folder must already exist.").
+				Description("Example: /d/d1/app/fluent-bit/data/database/\nRecommended for production, parent folder must already exist").
 				Value(&userInput.DBPath),
 
 			huh.NewConfirm().
 				Title("Read existing files from head?").
-				Description("Strongly recommended to keep disabled in production to avoid backfilling old logs.").
+				Description("Strongly recommended to keep disabled in production to avoid backfilling old logs").
 				Value(&userInput.ReadFromHead),
 		)
 	} else {
@@ -188,7 +191,8 @@ func collectTailInput(userInput *config.UserInput, logPathsText *string) error {
 		userInput.ReadFromHead = true
 	}
 
-	fields = append(fields,
+	fields = append(
+		fields,
 		huh.NewInput().
 			Title("Tag for pipeline routing").
 			Description("Example: app").
@@ -210,8 +214,8 @@ func collectParserChoice(userInput *config.UserInput) error {
 			sectionNote("Parser and filter - Optional log parsing settings"),
 
 			huh.NewConfirm().
-				Title("Enable parser/filter configuration?").
-				Description("Generate parser and parser filter sections based on log format.").
+				Title("Parse log content into fields?").
+				Description("Enable this if you want to extract fields such as time, level, user or message from each log line").
 				Value(&userInput.EnableParser),
 		),
 	)
@@ -246,31 +250,31 @@ func collectLokiOutputInput(userInput *config.UserInput) error {
 
 			huh.NewInput().
 				Title("Loki endpoint").
-				Description("Refer https://docs.srv.ms.com.cn/cod-esm-o11y/observability-docs/LaaS/reference/instance.html for the endpoint.").
+				Description("Refer https://docs.srv.ms.com.cn/cod-esm-o11y/observability-docs/LaaS/reference/instance.html for the endpoint").
 				Value(&userInput.LokiHost).
 				Validate(required),
 
 			huh.NewInput().
 				Title("TenantID").
-				Description("Check your LaaS onboarding ticket for the TenantID.").
+				Description("Check your LaaS onboarding ticket for the TenantID").
 				Value(&userInput.TenantID).
 				Validate(required),
 
 			huh.NewInput().
 				Title("TLS CA file").
-				Description("Absolute path to the CA file.").
+				Description("Absolute path to the CA file").
 				Value(&userInput.TLSCAFile).
 				Validate(required),
 
 			huh.NewInput().
 				Title("TLS Cert file").
-				Description("Absolute path to the TLS cert file of systemid with RW permission upon the tenantID.").
+				Description("Absolute path to the TLS cert file of systemid with RW permission upon the tenantID").
 				Value(&userInput.TLSCrtFile).
 				Validate(required),
 
 			huh.NewInput().
 				Title("TLS Key file").
-				Description("Absolute path to the TLS key file of the systemid with RW permission upon the tenantID.").
+				Description("Absolute path to the TLS key file of the systemid with RW permission upon the tenantID").
 				Value(&userInput.TLSKeyFile).
 				Validate(required),
 		),

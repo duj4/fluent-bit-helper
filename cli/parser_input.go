@@ -50,11 +50,10 @@ func collectFormat(input *parser.ParserInput) error {
 			sectionNote("Parser - Select log format for parsing"),
 
 			huh.NewSelect[string]().
-				Title("Log format").
-				Description("JSON parses structured logs, regex parses plain text logs by generated regular expression").
+				Title("Log content format").
 				Options(
-					huh.NewOption("json", "json"),
-					huh.NewOption("regex", "regex"),
+					huh.NewOption("json - log line is a JSON object", "json"),
+					huh.NewOption("plain text - generate regex from sample log", "regex"),
 				).
 				Value(&input.Format),
 		),
@@ -110,16 +109,15 @@ func collectCommonParserInput(input *parser.ParserInput, inputTag string) error 
 			sectionNote("Filter - Parser filter settings"),
 
 			huh.NewSelect[string]().
-				Title("Filter match").
-				Description("Select the tag matched by this parser filter:").
+				Title("Apply parser to which tag?").
 				Options(
 					huh.NewOption(inputTag, inputTag),
 				).
 				Value(&input.Match),
 
 			huh.NewInput().
-				Title("Filter key_name").
-				Description("The record key to parse, for tail input this is usually log").
+				Title("Raw log field to parse").
+				Description("Usually: log").
 				Value(&input.KeyName).
 				Validate(required),
 		),
@@ -132,7 +130,7 @@ func collectCommonParserInput(input *parser.ParserInput, inputTag string) error 
 func collectRegexInput(input *parser.ParserInput) error {
 	regexForm := huh.NewForm(
 		huh.NewGroup(
-			sectionNote("Parser - Regex field extraction"),
+			sectionNote("Parser - Mark fields from a sample log"),
 
 			huh.NewText().
 				Title("Log snippet").
@@ -160,14 +158,14 @@ func collectRegexInput(input *parser.ParserInput) error {
 					Description(formatSnippetNote(input.Snippet, input.RegexFields)),
 
 				huh.NewInput().
-					Title("Field key").
+					Title("Field name").
 					Description("Example: timestamp, level, message, logger").
 					Value(&key).
 					Validate(validateRegexFieldKey(input.RegexFields)),
 
 				huh.NewInput().
-					Title("Field value").
-					Description("Exact value as it appears in the log snippet").
+					Title("Exact value from sample log").
+					Description("Copy the exact value for this field without surrounding separators like spaces, but preserve the ones inside the value if any").
 					Value(&value).
 					Validate(validateRegexFieldValue(input.Snippet, &key)),
 
@@ -328,8 +326,8 @@ func collectMultlineInput(input *parser.ParserInput) error {
 			sectionNote("Multiline Parser - Optional multiline parser settings"),
 
 			huh.NewConfirm().
-				Title("Enable multiline_parser?").
-				Description("Use timestamp-start rule to merge stack trace or multiline logs").
+				Title("Merge multiline log events?").
+				Description("Enable this for stack traces or logs where one event spans multiple lines").
 				Value(&input.EnableMultiline),
 		),
 	)
