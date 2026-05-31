@@ -65,11 +65,7 @@ func collectUserInput() (config.UserInput, error) {
 	}
 
 	// quick-test mode uses relaxed defaults and skips production-only fields.
-	if userInput.Mode == "quick-test" {
-		userInput.FluentBitLogFile = ""
-		userInput.DBPath = ""
-		userInput.ReadFromHead = true
-	}
+	config.ApplyModeDefaults(&userInput)
 
 	if err := collectServiceInput(&userInput); err != nil {
 		return userInput, err
@@ -136,31 +132,27 @@ func collectMode(userInput *config.UserInput) error {
 
 // collectServiceInput collects Fluent-Bit service related input.
 func collectServiceInput(userInput *config.UserInput) error {
-	fields := []huh.Field{
-		sectionNote("Service - Configure Fluent-Bit's own runtime settings"),
+	if userInput.Mode == "quick-test" {
+		userInput.FluentBitLogFile = ""
+		userInput.StoragePath = ""
+		return nil
 	}
 
-	if userInput.Mode == "production" {
-		fields = append(
-			fields,
+	form := huh.NewForm(
+		huh.NewGroup(
+			sectionNote("Service - Configure Fluent-Bit's own runtime settings"),
+
 			huh.NewInput().
 				Title("Fluent-Bit's own log file").
 				Description("Example: /d/d1/app/fluent-bit/log/fluent-bit.log\nRecommended for production and configure logrotate separately").
 				Value(&userInput.FluentBitLogFile),
-		)
-	}
 
-	fields = append(
-		fields,
-		huh.NewInput().
-			Title("Filesystem buffering directory").
-			Description("Example: /d/d1/app/fluent-bit/data/storage/  Must already exist.").
-			Value(&userInput.StoragePath).
-			Validate(required),
-	)
-
-	form := huh.NewForm(
-		huh.NewGroup(fields...),
+			huh.NewInput().
+				Title("Filesystem buffering directory").
+				Description("Example: /d/d1/app/fluent-bit/data/storage/  Must already exist.").
+				Value(&userInput.StoragePath).
+				Validate(required),
+		),
 	)
 
 	return form.Run()
@@ -183,13 +175,8 @@ func collectTailInput(userInput *config.UserInput, logPathsText *string) error {
 			fields,
 			huh.NewInput().
 				Title("Tail offset database file").
-				Description("Example: /d/d1/app/fluent-bit/data/database/\nRecommended for production, parent folder must already exist").
+				Description("Example: /d/d1/app/fluent-bit/data/database/app.db\nRecommended for production, parent folder must already exist").
 				Value(&userInput.DBPath),
-
-			huh.NewConfirm().
-				Title("Read existing files from head?").
-				Description("Strongly recommended to keep disabled in production to avoid backfilling old logs").
-				Value(&userInput.ReadFromHead),
 		)
 	} else {
 		userInput.DBPath = ""

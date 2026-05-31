@@ -47,7 +47,7 @@ type FluentBitConfig struct {
 // Env represents environment variables
 type Env struct {
 	FLBLogFile  string `yaml:"FLB_LOG_FILE,omitempty"`
-	StoragePath string `yaml:"STORAGE_PATH"`
+	StoragePath string `yaml:"STORAGE_PATH,omitempty"`
 
 	LogPath string `yaml:"LOG_PATH"`
 	DBPath  string `yaml:"DB_PATH,omitempty"`
@@ -68,9 +68,9 @@ type Service struct {
 	SchedulerBase int `yaml:"scheduler.base"`
 	SchedulerCap  int `yaml:"scheduler.cap"`
 
-	StoragePath                      string `yaml:"storage.path"`
-	StorageSync                      string `yaml:"storage.sync"`
-	StorageDeleteIrrecoverableChunks string `yaml:"storage.delete_irrecoverable_chunks"`
+	StoragePath                      string `yaml:"storage.path,omitempty"`
+	StorageSync                      string `yaml:"storage.sync,omitempty"`
+	StorageDeleteIrrecoverableChunks string `yaml:"storage.delete_irrecoverable_chunks,omitempty"`
 }
 
 // Pipeline represents pipeline configuration
@@ -94,7 +94,7 @@ type TailInput struct {
 
 	SkipEmptyLines  string `yaml:"skip_empty_lines"`
 	RefreshInterval int    `yaml:"refresh_interval"`
-	StorageType     string `yaml:"storage.type"`
+	StorageType     string `yaml:"storage.type,omitempty"`
 	Threaded        string `yaml:"threaded"`
 }
 

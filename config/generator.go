@@ -72,14 +72,18 @@ func Build(userInput UserInput) (FluentBitConfig, error) {
 }
 
 func buildBaseEnv(userInput UserInput) Env {
-	return Env{
-		FLBLogFile:  userInput.FluentBitLogFile,
-		StoragePath: userInput.StoragePath,
-
+	env := Env{
 		LogPath: strings.Join(userInput.LogPaths, ","),
 		DBPath:  userInput.DBPath,
 		Tag:     userInput.Tag,
 	}
+
+	if userInput.Mode == "production" {
+		env.FLBLogFile = userInput.FluentBitLogFile
+		env.StoragePath = userInput.StoragePath
+	}
+
+	return env
 }
 
 func buildLokiEnv(env Env, userInput UserInput) Env {
@@ -98,14 +102,15 @@ func buildService(userInput UserInput) Service {
 
 		SchedulerBase: 5,
 		SchedulerCap:  300,
-
-		StoragePath:                      "${STORAGE_PATH}",
-		StorageSync:                      "full",
-		StorageDeleteIrrecoverableChunks: "on",
 	}
 
-	if userInput.FluentBitLogFile != "" {
-		service.LogFile = "${FLB_LOG_FILE}"
+	if userInput.Mode == "production" {
+		if userInput.FluentBitLogFile != "" {
+			service.LogFile = "${FLB_LOG_FILE}"
+		}
+		service.StoragePath = "${STORAGE_PATH}"
+		service.StorageSync = "full"
+		service.StorageDeleteIrrecoverableChunks = "on"
 	}
 
 	return service
@@ -131,6 +136,10 @@ func buildTailInput(userInput UserInput) TailInput {
 
 	if userInput.ReadFromHead {
 		tailInput.ReadFromHead = "on"
+	}
+
+	if userInput.Mode == "production" {
+		tailInput.StorageType = "filesystem"
 	}
 
 	if userInput.EnableParser && userInput.ParserInput.EnableMultiline {

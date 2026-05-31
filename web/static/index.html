@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Fluent-Bit Config Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+    <header class="topbar">
+        <div>
+            <h1>Fluent-Bit Config Generator</h1>
+            <p>Generate Fluent-Bit YAML for tail input, parser filters, multiline parsing, and Loki output.</p>
+        </div>
+
+        <div class="topbar-actions">
+            <button id="themeToggleBtn" class="secondary">Light mode</button>
+            <button id="copyYamlBtn" class="secondary">Copy YAML</button>
+            <button id="downloadYamlBtn" class="secondary">Download</button>
+        </div>
+    </header>
+
+    <main class="layout" id="layout">
+        <section class="panel form-panel" id="formPanel">
+            <div class="card">
+                <h2>Mode</h2>
+
+                <label>
+                    Usage mode
+                    <select id="mode">
+                        <option value="quick-test">quick test</option>
+                        <option value="production">production</option>
+                    </select>
+                </label>
+
+                <p id="modeDescription" class="field-hint">
+                    Quick test generates a lightweight config without filesystem buffering and tail offset database.
+                </p>
+            </div>
+
+            <div id="serviceCard" class="card">
+                <h2>Service</h2>
+
+                <div id="flbLogFileBlock">
+                    <label>
+                        Fluent-Bit's own log file
+                        <input id="flbLogFile" placeholder="/d/d1/app/fluent-bit/log/fluent-bit.log" />
+                        <small>The parent directory must already exist. Configure log rotation separately for this
+                            file.</small>
+                    </label>
+                </div>
+
+                <div id="storagePathBlock">
+                    <label>
+                        Filesystem buffering directory
+                        <input id="storagePath" placeholder="/d/d1/app/fluent-bit/data/storage/" />
+                        <small>This directory must already exist. Fluent Bit uses it to buffer chunks on disk.</small>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Tail input</h2>
+
+                <label>
+                    Monitored log path(s)
+                    <textarea id="logPaths" rows="3"
+                        placeholder="/d/d1/app/log/app.log&#10;/d/d1/app/log/access.log"></textarea>
+                    <small>One path per line or comma-separated</small>
+                </label>
+
+                <div id="dbPathBlock">
+                    <label>
+                        Tail offset database file
+                        <input id="dbPath" placeholder="/d/d1/app/fluent-bit/data/database/app.db" />
+                        <small>The parent directory must already exist. Fluent Bit creates or updates the database
+                            file.</small>
+                    </label>
+                </div>
+
+                <label>
+                    Tag
+                    <input id="tag" placeholder="app" />
+                </label>
+            </div>
+
+            <div class="card">
+                <h2>Parser</h2>
+
+                <div class="checkbox-row">
+                    <input id="enableParser" type="checkbox" />
+                    <label for="enableParser">Parse log content into fields</label>
+                </div>
+
+                <div id="parserBlock" class="hidden">
+                    <div class="grid two">
+                        <label>
+                            Log content format
+                            <select id="parserFormat">
+                                <option value="json">json</option>
+                                <option value="regex">plain text</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Original log timezone
+                            <select id="timezone">
+                                <option value="GMT">GMT</option>
+                                <option value="GMT+8">GMT+8</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div id="jsonParserBlock">
+                        <div class="grid two">
+                            <label>
+                                Original timestamp key
+                                <input id="jsonTimeKey" placeholder="timestamp" />
+                            </label>
+
+                            <label>
+                                Original timestamp value
+                                <input id="jsonTimeValue" placeholder="2026-01-02T15:04:05.678+0800" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="regexParserBlock" class="hidden">
+                        <label>
+                            Sample log
+                            <textarea id="snippet" rows="5" placeholder="Paste one single-line log example"></textarea>
+                        </label>
+
+                        <div class="table-header">
+                            <div>
+                                <h3>Extracted fields</h3>
+                                <small>Each exact value must appear exactly once in the sample log.</small>
+                            </div>
+
+                            <button id="addRegexFieldBtn" class="secondary" type="button">Add field</button>
+                        </div>
+
+                        <div id="regexFields"></div>
+
+                        <label>
+                            Timestamp field
+                            <select id="regexTimeField"></select>
+                        </label>
+                    </div>
+
+                    <div class="grid two">
+                        <label>
+                            Parser name
+                            <input id="parserName" placeholder="parser_app" />
+                        </label>
+
+                        <label>
+                            Raw log field to parse
+                            <input id="keyName" placeholder="log" />
+                        </label>
+                    </div>
+
+                    <div id="multilineBlock" class="multiline-block">
+                        <div class="checkbox-row">
+                            <input id="enableMultiline" type="checkbox" />
+                            <label for="enableMultiline">Merge multiline log events</label>
+                        </div>
+
+                        <div id="multilineNameBlock" class="hidden">
+                            <label>
+                                Multiline parser name
+                                <input id="multilineParserName" placeholder="multi_app" />
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Output</h2>
+
+                <label>
+                    Output destination
+                    <select id="output">
+                        <option value="stdout">stdout</option>
+                        <option value="loki">loki</option>
+                    </select>
+                </label>
+
+                <p class="field-hint">
+                    Use stdout for quick local validation, or Loki for shipping logs to the logging platform.
+                </p>
+            </div>
+
+            <div id="lokiBlock" class="card hidden">
+                <h2>Loki output</h2>
+
+                <div class="grid two">
+                    <label>
+                        Loki endpoint
+                        <input id="lokiHost" placeholder="loki.example.internal" />
+                    </label>
+
+                    <label>
+                        TenantID
+                        <input id="tenantID" placeholder="tenant-id" />
+                    </label>
+                </div>
+
+                <label>
+                    TLS CA file
+                    <input id="tlsCAFile" placeholder="/etc/pki/ca-trust/source/anchors/katello-server-ca.pem" />
+                </label>
+
+                <label>
+                    TLS Cert file
+                    <input id="tlsCrtFile" placeholder="/path/to/systemid.crt" />
+                </label>
+
+                <label>
+                    TLS Key file
+                    <input id="tlsKeyFile" placeholder="/path/to/systemid.key" />
+                </label>
+
+                <div id="lokiLabelBlock" class="hidden">
+                    <div class="checkbox-row">
+                        <input id="enableLokiLabels" type="checkbox" />
+                        <label for="enableLokiLabels">Add parser fields as Loki labels</label>
+                    </div>
+
+                    <div id="lokiLabelConfigBlock" class="hidden">
+                        <div class="info-box">
+                            <strong>Label guidance</strong>
+                            <p>
+                                <code>filename</code> and <code>instance</code> are always included.
+                                Add only stable, low-cardinality fields such as <code>level</code>,
+                                <code>service</code>, or <code>component</code>.
+                            </p>
+                            <p>
+                                Avoid unique or high-cardinality fields such as <code>timestamp</code>,
+                                <code>message</code>, <code>trace_id</code>, <code>request_id</code>, or
+                                <code>user_id</code>.
+                            </p>
+                        </div>
+
+                        <div class="section-heading">
+                            <h3>Additional Loki labels</h3>
+                            <button id="addLokiLabelBtn" class="secondary" type="button">Add label</button>
+                        </div>
+
+                        <p id="lokiLabelHint" class="inline-hint hidden"></p>
+
+                        <div id="lokiLabels"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div id="resizeHandle" class="resize-handle"></div>
+
+        <section class="panel preview-panel">
+            <div class="preview-header">
+                <h2>YAML preview</h2>
+                <span id="statusBadge" class="badge">waiting</span>
+            </div>
+
+            <div id="warnings" class="warnings hidden"></div>
+
+            <pre id="yamlPreview">Fill the form to generate YAML...</pre>
+        </section>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+
+</html>
