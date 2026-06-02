@@ -1,0 +1,6 @@
+fluent-bit.yaml
+flbctl
+data/
+test.json
+test.log
+vendor/
