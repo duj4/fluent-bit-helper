@@ -19,12 +19,12 @@ const listenAddr = ":8080"
 
 // Run starts the Fluent-Bit config generator web service.
 func Run() error {
-	gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.ReleaseMode)
 
-	r := gin.New()
-	r.Use(gin.Recovery())
+	// r := gin.New()
+	// r.Use(gin.Recovery())
 
-	// r := gin.Default()
+	r := gin.Default()
 
 	registerAPI(r)
 

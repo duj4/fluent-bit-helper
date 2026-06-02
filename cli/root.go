@@ -23,5 +23,4 @@ func Execute() error {
 // init() is automatically executed by Go runtime when the cli package is initialized, this registers subcommands into the root command tree.
 func init() {
 	rootCmd.AddCommand(initCmd)
-	rootCmd.AddCommand(doctorCmd)
 }

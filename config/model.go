@@ -21,16 +21,23 @@ type UserInput struct {
 	ParserInput  parser.ParserInput
 
 	// loki
-	LokiHost   string
-	TenantID   string
-	TLSCAFile  string
-	TLSCrtFile string
-	TLSKeyFile string
-	LokiLabels []LokiLabel
+	LokiHost               string
+	TenantID               string
+	TLSCAFile              string
+	TLSCrtFile             string
+	TLSKeyFile             string
+	LokiLabels             []LokiLabel
+	LokiStructuredMetadata []LokiStructuredMetadata
 }
 
 // LokiLabel represents one Loki label mapping
 type LokiLabel struct {
+	Name  string
+	Field string
+}
+
+// LokiStructuredMetadata represents one Loki structured metadata mapping
+type LokiStructuredMetadata struct {
 	Name  string
 	Field string
 }
@@ -109,10 +116,11 @@ type LokiOutput struct {
 	Name  string `yaml:"name"`
 	Match string `yaml:"match"`
 
-	Host     string `yaml:"host,omitempty"`
-	Port     int    `yaml:"port,omitempty"`
-	TenantID string `yaml:"tenant_id,omitempty"`
-	Labels   string `yaml:"labels,omitempty"`
+	Host               string `yaml:"host,omitempty"`
+	Port               int    `yaml:"port,omitempty"`
+	TenantID           string `yaml:"tenant_id,omitempty"`
+	Labels             string `yaml:"labels,omitempty"`
+	StructuredMetadata string `yaml:"structured_metadata,omitempty"`
 
 	TLS        string `yaml:"tls,omitempty"`
 	TLSCAFile  string `yaml:"tls.ca_file,omitempty"`

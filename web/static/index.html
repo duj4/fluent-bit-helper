@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Fluent-Bit Config Generator</title>
+    <title>Fluent-Bit Helper</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="/style.css" />
 </head>
@@ -11,19 +11,30 @@
 <body>
     <header class="topbar">
         <div>
-            <h1>Fluent-Bit Config Generator</h1>
-            <p>Generate Fluent-Bit YAML for tail input, parser filters, multiline parsing, and Loki output.</p>
+            <h1>Fluent-Bit Helper</h1>
+            <p>Generate recommended Fluent Bit YAML or check an existing config against the production baseline.</p>
         </div>
 
         <div class="topbar-actions">
-            <button id="themeToggleBtn" class="secondary">Light mode</button>
-            <button id="copyYamlBtn" class="secondary">Copy YAML</button>
-            <button id="downloadYamlBtn" class="secondary">Download</button>
+            <div class="action-group view-group" aria-label="View switcher">
+                <button id="generateViewBtn" class="secondary view-toggle active" type="button">Generate YAML</button>
+                <button id="doctorViewBtn" class="secondary view-toggle" type="button">Check YAML</button>
+            </div>
+
+            <div class="action-group result-action-group" aria-label="Current view actions">
+                <button id="copyYamlBtn" class="secondary" type="button">Copy YAML</button>
+                <button id="downloadYamlBtn" class="secondary" type="button">Download</button>
+            </div>
+
+            <div class="action-group global-action-group" aria-label="Global settings">
+                <button id="themeToggleBtn" class="secondary" type="button">Light mode</button>
+            </div>
         </div>
     </header>
 
     <main class="layout" id="layout">
         <section class="panel form-panel" id="formPanel">
+            <div id="generateForm">
             <div class="card">
                 <h2>Mode</h2>
 
@@ -234,7 +245,10 @@
                         <div class="info-box">
                             <strong>Label guidance</strong>
                             <p>
+                                Loki labels are indexed and used to select log streams.
                                 <code>filename</code> and <code>instance</code> are always included.
+                            </p>
+                            <p>
                                 Add only stable, low-cardinality fields such as <code>level</code>,
                                 <code>service</code>, or <code>component</code>.
                             </p>
@@ -254,7 +268,49 @@
 
                         <div id="lokiLabels"></div>
                     </div>
+
+                    <div id="structuredMetadataBlock">
+                        <div class="checkbox-row">
+                            <input id="enableStructuredMetadata" type="checkbox" />
+                            <label for="enableStructuredMetadata">Add parser fields as structured metadata</label>
+                        </div>
+
+                        <div id="structuredMetadataConfigBlock" class="hidden">
+                            <div class="info-box">
+                                <strong>Structured metadata guidance</strong>
+                                <p>
+                                    Structured metadata is attached to each log line but is not indexed by Loki.
+                                </p>
+                                <p>
+                                    Recommended for searchable high-cardinality fields such as
+                                    <code>trace_id</code>, <code>request_id</code>, <code>correlation_id</code>,
+                                    <code>thread</code>, or <code>user_id</code>.
+                                </p>
+                            </div>
+
+                            <div class="section-heading">
+                                <h3>Structured metadata</h3>
+                                <button id="addStructuredMetadataBtn" class="secondary" type="button">Add metadata</button>
+                            </div>
+
+                            <p id="structuredMetadataHint" class="inline-hint hidden"></p>
+
+                            <div id="structuredMetadata"></div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            </div>
+
+            <div id="doctorForm" class="doctor-form hidden">
+                <div class="doctor-input-header">
+                    <h2>Fluent-Bit Config</h2>
+                    <p>Paste a Fluent-Bit YAML config, diagnosis updates automatically.</p>
+                </div>
+
+                <textarea id="doctorYamlInput" class="doctor-yaml-input" rows="24" placeholder="Paste fluent-bit.yaml content here"></textarea>
+
+                <p id="doctorHint" class="inline-hint hidden"></p>
             </div>
         </section>
 
@@ -262,13 +318,14 @@
 
         <section class="panel preview-panel">
             <div class="preview-header">
-                <h2>YAML preview</h2>
+                <h2 id="previewTitle">YAML preview</h2>
                 <span id="statusBadge" class="badge">waiting</span>
             </div>
 
             <div id="warnings" class="warnings hidden"></div>
 
             <pre id="yamlPreview">Fill the form to generate YAML...</pre>
+            <div id="doctorResult" class="doctor-result hidden"></div>
         </section>
     </main>
 

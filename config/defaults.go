@@ -1,6 +1,9 @@
 package config
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // ApplyModeDefaults applies mode-specific defaults before config generation.
 func ApplyModeDefaults(input *UserInput) {
@@ -50,5 +53,54 @@ func BuildWarnings(input UserInput) []string {
 		warnings = append(warnings, "Loki output: make sure selected labels are low-cardinality fields")
 	}
 
+	if input.Output == "loki" {
+		duplicatedNames := findDuplicatedLokiNames(input.LokiLabels, input.LokiStructuredMetadata)
+		if len(duplicatedNames) > 0 {
+			warnings = append(
+				warnings,
+				fmt.Sprintf(
+					"Loki output: label name and structured metadata name must be unique: %s",
+					strings.Join(duplicatedNames, ", "),
+				),
+			)
+		}
+	}
+
 	return warnings
+}
+
+func findDuplicatedLokiNames(labels []LokiLabel, metadata []LokiStructuredMetadata) []string {
+	labelNames := make(map[string]struct{})
+
+	for _, label := range labels {
+		name := strings.TrimSpace(label.Name)
+		if name == "" {
+			continue
+		}
+
+		labelNames[name] = struct{}{}
+	}
+
+	var duplicated []string
+	seen := make(map[string]struct{})
+
+	for _, item := range metadata {
+		name := strings.TrimSpace(item.Name)
+		if name == "" {
+			continue
+		}
+
+		if _, ok := labelNames[name]; !ok {
+			continue
+		}
+
+		if _, ok := seen[name]; ok {
+			continue
+		}
+
+		duplicated = append(duplicated, name)
+		seen[name] = struct{}{}
+	}
+
+	return duplicated
 }

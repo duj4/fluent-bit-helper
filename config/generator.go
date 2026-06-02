@@ -161,10 +161,11 @@ func buildLokiOutput(userInput UserInput) LokiOutput {
 		Name:  "loki",
 		Match: "${TAG}",
 
-		Host:     "${LOKI_HOST}",
-		Port:     443,
-		TenantID: "${TENANT_ID}",
-		Labels:   buildLokiLabels(userInput),
+		Host:               "${LOKI_HOST}",
+		Port:               443,
+		TenantID:           "${TENANT_ID}",
+		Labels:             buildLokiLabels(userInput),
+		StructuredMetadata: buildLokiStructuredMetadata(userInput),
 
 		TLS:        "on",
 		TLSCAFile:  "${TLS_CA_FILE}",
@@ -201,6 +202,22 @@ func buildLokiLabels(userInput UserInput) string {
 	}
 
 	return strings.Join(labels, ", ")
+}
+
+func buildLokiStructuredMetadata(UserInput UserInput) string {
+	var metadata []string
+	for _, item := range UserInput.LokiStructuredMetadata {
+		name := strings.TrimSpace(item.Name)
+		field := strings.TrimSpace(item.Field)
+
+		if name == "" || field == "" {
+			continue
+		}
+
+		metadata = append(metadata, fmt.Sprintf("%s=$%s", name, field))
+	}
+
+	return strings.Join(metadata, ", ")
 }
 
 // ToYAML renders FluentBitConfig into YAML.

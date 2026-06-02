@@ -30,7 +30,8 @@ const state = {
     TLSCAFile: "",
     TLSCrtFile: "",
     TLSKeyFile: "",
-    LokiLabels: []
+    LokiLabels: [],
+    LokiStructuredMetadata: []
 };
 
 const $ = (id) => document.getElementById(id);
@@ -38,6 +39,11 @@ const $ = (id) => document.getElementById(id);
 const els = {
     layout: $("layout"),
     resizeHandle: $("resizeHandle"),
+
+    generateViewBtn: $("generateViewBtn"),
+    doctorViewBtn: $("doctorViewBtn"),
+    generateForm: $("generateForm"),
+    doctorForm: $("doctorForm"),
 
     themeToggleBtn: $("themeToggleBtn"),
     mode: $("mode"),
@@ -81,13 +87,26 @@ const els = {
     lokiLabelHint: $("lokiLabelHint"),
     lokiLabels: $("lokiLabels"),
     addLokiLabelBtn: $("addLokiLabelBtn"),
+
+    structuredMetadataBlock: $("structuredMetadataBlock"),
+    enableStructuredMetadata: $("enableStructuredMetadata"),
+    structuredMetadataConfigBlock: $("structuredMetadataConfigBlock"),
+    structuredMetadataHint: $("structuredMetadataHint"),
+    structuredMetadata: $("structuredMetadata"),
+    addStructuredMetadataBtn: $("addStructuredMetadataBtn"),
+
     lokiHost: $("lokiHost"),
     tenantID: $("tenantID"),
     tlsCAFile: $("tlsCAFile"),
     tlsCrtFile: $("tlsCrtFile"),
     tlsKeyFile: $("tlsKeyFile"),
 
+    doctorYamlInput: $("doctorYamlInput"),
+    doctorHint: $("doctorHint"),
+
+    previewTitle: $("previewTitle"),
     yamlPreview: $("yamlPreview"),
+    doctorResult: $("doctorResult"),
     statusBadge: $("statusBadge"),
     warnings: $("warnings"),
     copyYamlBtn: $("copyYamlBtn"),
@@ -95,7 +114,10 @@ const els = {
 };
 
 let latestYaml = "";
+let activeView = "generate";
 let debounceTimer = null;
+let doctorDebounceTimer = null;
+let doctorRequestSeq = 0;
 
 function setVisible(el, visible) {
     if (!el) {
@@ -161,6 +183,8 @@ function syncStateFromDOM() {
     state.TLSCrtFile = els.tlsCrtFile.value.trim();
     state.TLSKeyFile = els.tlsKeyFile.value.trim();
     state.LokiLabels = collectLokiLabels();
+    state.LokiStructuredMetadata = collectStructuredMetadata();
+    removeStructuredMetadataFieldsAlreadyUsedAsLabels();
 }
 
 function buildGeneratePayload() {
@@ -187,6 +211,7 @@ function buildGeneratePayload() {
         };
 
         payload.LokiLabels = [];
+        payload.LokiStructuredMetadata = [];
 
         frontendWarnings.push("Parser: parser is enabled but not complete yet; YAML preview is generated without parser section");
         return { payload, frontendWarnings };
@@ -206,6 +231,10 @@ function buildGeneratePayload() {
 
     if (!isAdditionalLokiLabelsEnabled()) {
         payload.LokiLabels = [];
+    }
+
+    if (!isStructuredMetadataEnabled()) {
+        payload.LokiStructuredMetadata = [];
     }
 
     return { payload, frontendWarnings };
@@ -267,6 +296,16 @@ function isAdditionalLokiLabelsEnabled() {
     );
 }
 
+function isStructuredMetadataEnabled() {
+    return Boolean(
+        els.enableStructuredMetadata &&
+        els.enableStructuredMetadata.checked &&
+        els.output.value === "loki" &&
+        els.enableParser.checked &&
+        els.parserFormat.value === "regex"
+    );
+}
+
 function renderVisibility() {
     const isQuickTest = els.mode.value === "quick-test";
     const parserEnabled = els.enableParser.checked;
@@ -289,6 +328,8 @@ function renderVisibility() {
     setVisible(els.lokiBlock, isLokiOutput);
     setVisible(els.lokiLabelBlock, isLokiOutput && parserEnabled && isRegexParser);
     setVisible(els.lokiLabelConfigBlock, isAdditionalLokiLabelsEnabled());
+    setVisible(els.structuredMetadataBlock, isLokiOutput && parserEnabled && isRegexParser);
+    setVisible(els.structuredMetadataConfigBlock, isStructuredMetadataEnabled());
 
     renderModeDescription();
 }
@@ -339,6 +380,7 @@ function renderRegexFields() {
             state.ParserInput.RegexFields.splice(index, 1);
             renderRegexFields();
             renderLokiLabels();
+            renderStructuredMetadata();
             scheduleGenerate();
         });
 
@@ -347,6 +389,7 @@ function renderRegexFields() {
                 state.ParserInput.RegexFields = collectRegexFields();
                 renderRegexTimeOptions();
                 renderLokiLabels();
+                renderStructuredMetadata();
                 scheduleGenerate();
             });
 
@@ -357,6 +400,7 @@ function renderRegexFields() {
                     state.ParserInput.RegexFields = collectRegexFields();
                     renderRegexTimeOptions();
                     renderLokiLabels();
+                    renderStructuredMetadata();
                     scheduleGenerate();
                 }
             });
@@ -431,11 +475,18 @@ function collectLokiLabels() {
 
 function getUsedLokiFields(exceptIndex) {
     const labels = collectLokiLabels();
+    const metadata = collectStructuredMetadata();
     const used = new Set();
 
     labels.forEach((label, index) => {
         if (index !== exceptIndex && label.Field) {
             used.add(label.Field);
+        }
+    });
+
+    metadata.forEach((item) => {
+        if (item.Field) {
+            used.add(item.Field);
         }
     });
 
@@ -467,6 +518,7 @@ function renderLokiLabels() {
         row.querySelector(".remove-btn").addEventListener("click", () => {
             state.LokiLabels.splice(index, 1);
             renderLokiLabels();
+            renderStructuredMetadata();
             scheduleGenerate();
         });
 
@@ -480,7 +532,9 @@ function renderLokiLabels() {
 
         fieldSelect.addEventListener("change", () => {
             state.LokiLabels = collectLokiLabels();
+            removeStructuredMetadataFieldsAlreadyUsedAsLabels();
             renderLokiLabels();
+            renderStructuredMetadata();
             scheduleGenerate();
         });
 
@@ -489,11 +543,108 @@ function renderLokiLabels() {
 }
 
 function buildLokiFieldOptions(current, index) {
-    const fields = collectRegexFields()
-        .map((f) => f.Key.trim())
-        .filter(Boolean);
+    const fields = getParserFieldNames();
 
     const used = getUsedLokiFields(index);
+
+    return fields
+        .filter((field) => field === current || !used.has(field))
+        .map((field) => {
+            const selected = field === current ? "selected" : "";
+            return `<option value="${escapeAttr(field)}" ${selected}>${escapeHTML(field)}</option>`;
+        })
+        .join("");
+}
+
+function collectStructuredMetadata() {
+    if (!els.structuredMetadata) {
+        return [];
+    }
+
+    return [...els.structuredMetadata.querySelectorAll(".structured-metadata-row")]
+        .map((row) => ({
+            Field: row.querySelector(".structured-metadata-field").value.trim(),
+            Name: row.querySelector(".structured-metadata-name").value.trim()
+        }))
+        .filter((item) => item.Field !== "" || item.Name !== "");
+}
+
+function getUsedStructuredMetadataFields(exceptIndex) {
+    const labels = collectLokiLabels();
+    const metadata = collectStructuredMetadata();
+    const used = new Set();
+
+    labels.forEach((label) => {
+        if (label.Field) {
+            used.add(label.Field);
+        }
+    });
+
+    metadata.forEach((item, index) => {
+        if (index !== exceptIndex && item.Field) {
+            used.add(item.Field);
+        }
+    });
+
+    return used;
+}
+
+function renderStructuredMetadata() {
+    clearStructuredMetadataHint();
+
+    if (!els.structuredMetadata) {
+        return;
+    }
+
+    const metadata = state.LokiStructuredMetadata || [];
+    els.structuredMetadata.innerHTML = "";
+
+    metadata.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "row structured-metadata-row";
+
+        row.innerHTML = `
+      <label>
+        Parser field
+        <select class="structured-metadata-field">${buildStructuredMetadataFieldOptions(item.Field, index)}</select>
+      </label>
+      <label>
+        Metadata name
+        <input class="structured-metadata-name" value="${escapeAttr(item.Name)}" placeholder="trace_id" />
+      </label>
+      <button type="button" class="remove-btn">Remove</button>
+    `;
+
+        row.querySelector(".remove-btn").addEventListener("click", () => {
+            state.LokiStructuredMetadata.splice(index, 1);
+            renderLokiLabels();
+            renderStructuredMetadata();
+            scheduleGenerate();
+        });
+
+        const nameInput = row.querySelector(".structured-metadata-name");
+        const fieldSelect = row.querySelector(".structured-metadata-field");
+
+        nameInput.addEventListener("input", () => {
+            state.LokiStructuredMetadata = collectStructuredMetadata();
+            scheduleGenerate();
+        });
+
+        fieldSelect.addEventListener("change", () => {
+            state.LokiStructuredMetadata = collectStructuredMetadata();
+            renderLokiLabels();
+            renderStructuredMetadata();
+            scheduleGenerate();
+        });
+
+        els.structuredMetadata.appendChild(row);
+    });
+}
+
+function buildStructuredMetadataFieldOptions(current, index) {
+    const fields = getParserFieldNames();
+
+    const used = getUsedStructuredMetadataFields(index);
 
     return fields
         .filter((field) => field === current || !used.has(field))
@@ -516,20 +667,21 @@ function addLokiLabel() {
 
     state.LokiLabels = collectLokiLabels();
 
-    const fields = collectRegexFields()
-        .map((field) => field.Key.trim())
-        .filter(Boolean);
+    const fields = getParserFieldNames();
 
     if (fields.length === 0) {
         showLokiLabelHint("Add extracted fields first, then choose which fields should become Loki labels.");
         return;
     }
 
-    const used = new Set(state.LokiLabels.map((label) => label.Field));
+    const used = new Set([
+        ...state.LokiLabels.map((label) => label.Field),
+        ...state.LokiStructuredMetadata.map((item) => item.Field)
+    ]);
     const firstAvailable = fields.find((key) => !used.has(key));
 
     if (!firstAvailable) {
-        showLokiLabelHint("All extracted fields are already added as Loki labels.");
+        showLokiLabelHint("All extracted fields are already used as Loki labels or structured metadata.");
         return;
     }
 
@@ -539,6 +691,40 @@ function addLokiLabel() {
     });
 
     renderLokiLabels();
+    renderStructuredMetadata();
+    scheduleGenerate();
+}
+
+function addStructuredMetadata() {
+    clearStructuredMetadataHint();
+
+    state.LokiStructuredMetadata = collectStructuredMetadata();
+
+    const fields = getParserFieldNames();
+
+    if (fields.length === 0) {
+        showStructuredMetadataHint("Add extracted fields first, then choose which fields should become structured metadata.");
+        return;
+    }
+
+    const used = new Set([
+        ...state.LokiLabels.map((label) => label.Field),
+        ...state.LokiStructuredMetadata.map((item) => item.Field)
+    ]);
+    const firstAvailable = fields.find((key) => !used.has(key));
+
+    if (!firstAvailable) {
+        showStructuredMetadataHint("All extracted fields are already used as Loki labels or structured metadata.");
+        return;
+    }
+
+    state.LokiStructuredMetadata.push({
+        Field: firstAvailable,
+        Name: firstAvailable
+    });
+
+    renderLokiLabels();
+    renderStructuredMetadata();
     scheduleGenerate();
 }
 
@@ -560,12 +746,385 @@ function clearLokiLabelHint() {
     els.lokiLabelHint.classList.add("hidden");
 }
 
+function showStructuredMetadataHint(message) {
+    if (!els.structuredMetadataHint) {
+        return;
+    }
+
+    els.structuredMetadataHint.textContent = message;
+    els.structuredMetadataHint.classList.remove("hidden");
+}
+
+function clearStructuredMetadataHint() {
+    if (!els.structuredMetadataHint) {
+        return;
+    }
+
+    els.structuredMetadataHint.textContent = "";
+    els.structuredMetadataHint.classList.add("hidden");
+}
+
+function findDuplicatedLokiNames(labels, metadata) {
+    const labelNames = new Set(
+        labels
+            .map((label) => label.Name.trim())
+            .filter(Boolean)
+    );
+
+    const duplicated = [];
+    const seen = new Set();
+
+    metadata.forEach((item) => {
+        const name = item.Name.trim();
+
+        if (!name || !labelNames.has(name) || seen.has(name)) {
+            return;
+        }
+
+        duplicated.push(name);
+        seen.add(name);
+    });
+
+    return duplicated;
+}
+
+function getParserFieldNames() {
+    return collectRegexFields()
+        .map((field) => field.Key.trim())
+        .filter(Boolean);
+}
+
+function getUsedLokiFieldsFromState() {
+    return new Set(
+        (state.LokiLabels || [])
+            .map((label) => label.Field)
+            .filter(Boolean)
+    );
+}
+
+function getUsedStructuredMetadataFieldsFromState() {
+    return new Set(
+        (state.LokiStructuredMetadata || [])
+            .map((item) => item.Field)
+            .filter(Boolean)
+    );
+}
+
+function removeStructuredMetadataFieldsAlreadyUsedAsLabels() {
+    const labelFields = getUsedLokiFieldsFromState();
+
+    state.LokiStructuredMetadata = (state.LokiStructuredMetadata || [])
+        .filter((item) => !labelFields.has(item.Field));
+}
+
+function switchView(view) {
+    activeView = view;
+
+    const isGenerate = view === "generate";
+
+    setVisible(els.generateForm, isGenerate);
+    setVisible(els.doctorForm, !isGenerate);
+
+    els.generateViewBtn.classList.toggle("active", isGenerate);
+    els.doctorViewBtn.classList.toggle("active", !isGenerate);
+
+    setVisible(els.copyYamlBtn, isGenerate);
+    setVisible(els.downloadYamlBtn, isGenerate);
+
+    if (els.previewTitle) {
+        els.previewTitle.textContent = isGenerate ? "YAML preview" : "Diagnosis";
+    }
+
+    if (isGenerate) {
+        setVisible(els.yamlPreview, true);
+        setVisible(els.doctorResult, false);
+        generateYAML();
+        return;
+    }
+
+    latestYaml = "";
+    renderWarnings([]);
+    setVisible(els.yamlPreview, false);
+    setVisible(els.doctorResult, true);
+    renderDoctorResult(null);
+    setStatus("", "waiting");
+    scheduleDoctor();
+}
+
+function showDoctorHint(message) {
+    if (!els.doctorHint) {
+        return;
+    }
+
+    els.doctorHint.textContent = message;
+    els.doctorHint.classList.remove("hidden");
+}
+
+function clearDoctorHint() {
+    if (!els.doctorHint) {
+        return;
+    }
+
+    els.doctorHint.textContent = "";
+    els.doctorHint.classList.add("hidden");
+}
+
+function scheduleDoctor() {
+    if (activeView !== "doctor") {
+        return;
+    }
+
+    clearTimeout(doctorDebounceTimer);
+    doctorDebounceTimer = setTimeout(runDoctor, 350);
+}
+
+async function runDoctor() {
+    clearDoctorHint();
+    renderWarnings([]);
+
+    const yaml = els.doctorYamlInput.value.trim();
+    if (!yaml) {
+        latestYaml = "";
+        setStatus("", "waiting");
+        renderDoctorResult(null);
+        return;
+    }
+
+    const requestID = ++doctorRequestSeq;
+    setStatus("", "checking");
+    renderDoctorResult({ loading: true });
+
+    try {
+        const response = await fetch("/api/doctor", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ yaml })
+        });
+
+        const data = await response.json();
+
+        if (requestID !== doctorRequestSeq) {
+            return;
+        }
+
+        if (!response.ok) {
+            setStatus("error", "Error");
+            latestYaml = "";
+            renderDoctorResult({ error: data.error || "failed to check YAML" });
+            return;
+        }
+
+        latestYaml = formatDoctorReport(data);
+        renderDoctorResult(data);
+
+        if ((data.error_count || 0) > 0) {
+            setStatus("error", "Error");
+        } else {
+            setStatus("ok", "Ready");
+        }
+    } catch (error) {
+        if (requestID !== doctorRequestSeq) {
+            return;
+        }
+
+        setStatus("error", "Error");
+        latestYaml = "";
+        renderDoctorResult({ error: error.message });
+    }
+}
+
+function renderDoctorResult(report) {
+    if (!els.doctorResult) {
+        return;
+    }
+
+    if (!report) {
+        els.doctorResult.innerHTML = `<div class="doctor-empty">Paste a Fluent Bit YAML config to run diagnosis automatically.</div>`;
+        return;
+    }
+
+    if (report.loading) {
+        els.doctorResult.innerHTML = `<div class="doctor-empty">Checking config...</div>`;
+        return;
+    }
+
+    if (report.error) {
+        els.doctorResult.innerHTML = `<div class="doctor-error">${escapeHTML(report.error)}</div>`;
+        return;
+    }
+
+    const checks = report.checks || [];
+    if (checks.length === 0) {
+        els.doctorResult.innerHTML = `<div class="doctor-empty">No checks returned.</div>`;
+        return;
+    }
+
+    const groups = groupDoctorChecks(checks);
+
+    els.doctorResult.innerHTML = `
+        <div class="doctor-groups">
+            ${groups.map((group) => `
+                <section class="doctor-group">
+                    <h3>${escapeHTML(group.section)}</h3>
+                    <div class="doctor-checks">
+                        ${group.checks.map(renderDoctorCheck).join("")}
+                    </div>
+                </section>
+            `).join("")}
+        </div>
+        <div class="doctor-final-summary">
+            Summary: ${Number(report.ok_count || 0)} OK, ${Number(report.warning_count || 0)} WARN, ${Number(report.error_count || 0)} ERROR
+        </div>
+    `;
+}
+
+function groupDoctorChecks(checks) {
+    const groups = [];
+    const groupMap = new Map();
+
+    checks.forEach((check) => {
+        const section = check.section || "General";
+
+        if (!groupMap.has(section)) {
+            const group = {
+                section,
+                checks: []
+            };
+            groupMap.set(section, group);
+            groups.push(group);
+        }
+
+        groupMap.get(section).checks.push(check);
+    });
+
+    return groups;
+}
+
+function renderDoctorCheck(check) {
+    const level = String(check.level || "INFO").toLowerCase();
+    const displayLevel = String(check.level || "INFO").toUpperCase();
+    const field = String(check.field || "").trim();
+    const message = buildDoctorDisplayMessage(check);
+    const details = buildDoctorDetails(check);
+
+    return `
+        <div class="doctor-check doctor-${escapeAttr(level)}">
+            <span class="doctor-level">${escapeHTML(displayLevel)}</span>
+            <div class="doctor-message">
+                ${field ? `<span class="doctor-field">${escapeHTML(field)}</span>` : ""}
+                <span class="doctor-text">${escapeHTML(message)}</span>
+                ${details}
+            </div>
+        </div>
+    `;
+}
+
+function buildDoctorDisplayMessage(check) {
+    const level = String(check.level || "INFO").toUpperCase();
+    const field = String(check.field || "").trim();
+    const message = String(check.message || "").trim();
+    const actual = String(check.actual || "").trim();
+
+    if (level === "OK" && actual) {
+        return actual;
+    }
+
+    if (!field || !message) {
+        return message;
+    }
+
+    return stripRepeatedFieldName(message, field);
+}
+
+function stripRepeatedFieldName(message, field) {
+    if (message === field) {
+        return "configured";
+    }
+
+    const prefixes = [
+        `${field} `,
+        `${field}: `,
+    ];
+
+    for (const prefix of prefixes) {
+        if (message.startsWith(prefix)) {
+            return message.slice(prefix.length).trim();
+        }
+    }
+
+    return message;
+}
+
+function buildDoctorDetails(check) {
+    const level = String(check.level || "INFO").toUpperCase();
+
+    if (level === "OK") {
+        return "";
+    }
+
+    const details = [];
+
+    if (check.actual) {
+        details.push(`<span class="doctor-detail">actual=${escapeHTML(check.actual)}</span>`);
+    }
+
+    if (check.expect) {
+        details.push(`<span class="doctor-detail">expected=${escapeHTML(check.expect)}</span>`);
+    }
+
+    return details.join(" ");
+}
+
+function formatDoctorReport(report) {
+    const checks = report.checks || [];
+
+    if (checks.length === 0) {
+        return "No checks returned.";
+    }
+
+    const lines = [];
+    let currentSection = "";
+
+    checks.forEach((check) => {
+        if (check.section !== currentSection) {
+            if (lines.length > 0) {
+                lines.push("");
+            }
+
+            currentSection = check.section || "General";
+            lines.push(`== ${currentSection} ==`);
+        }
+
+        const level = check.level || "INFO";
+        const field = check.field ? `${check.field}: ` : "";
+        const message = buildDoctorDisplayMessage(check);
+        const details = level === "OK" ? "" : [
+            check.actual ? `actual=${check.actual}` : "",
+            check.expect ? `expected=${check.expect}` : ""
+        ].filter(Boolean).join(" ");
+
+        lines.push(`[${level}] ${field}${message}${details ? ` ${details}` : ""}`);
+    });
+
+    lines.push("");
+    lines.push(`Summary: ${Number(report.ok_count || 0)} OK, ${Number(report.warning_count || 0)} WARN, ${Number(report.error_count || 0)} ERROR`);
+
+    return lines.join("\n");
+}
+
 function scheduleGenerate() {
+    if (activeView !== "generate") {
+        return;
+    }
+
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(generateYAML, 250);
 }
 
 async function generateYAML() {
+
     const { payload, frontendWarnings } = buildGeneratePayload();
     renderVisibility();
 
@@ -606,7 +1165,9 @@ async function generateYAML() {
 }
 
 function renderWarnings(warnings) {
-    if (!warnings || warnings.length === 0) {
+    warnings = uniqueWarnings(warnings || []);
+
+    if (warnings.length === 0) {
         els.warnings.classList.add("hidden");
         els.warnings.innerHTML = "";
         return;
@@ -628,6 +1189,23 @@ function renderWarnings(warnings) {
       `).join("")}
     </div>
   `;
+}
+
+function uniqueWarnings(warnings) {
+    const unique = [];
+    const seen = new Set();
+
+    warnings.forEach((warning) => {
+        const normalized = String(warning || "").trim();
+        if (!normalized || seen.has(normalized)) {
+            return;
+        }
+
+        seen.add(normalized);
+        unique.push(normalized);
+    });
+
+    return unique;
 }
 
 function groupWarningsBySection(warnings) {
@@ -686,7 +1264,7 @@ function setStatus(type, text) {
 
 async function copyYAML() {
     if (!latestYaml) {
-        showCopyFeedback("No YAML", false);
+        showCopyFeedback(activeView === "generate" ? "No YAML" : "No result", false);
         return;
     }
 
@@ -748,7 +1326,11 @@ function downloadYAML() {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `fluent-bit-${formatDownloadTimestamp(new Date())}.yaml`;
+    if (activeView === "generate") {
+        link.download = `fluent-bit-${formatDownloadTimestamp(new Date())}.yaml`;
+    } else {
+        link.download = `fluent-bit-doctor-${formatDownloadTimestamp(new Date())}.txt`;
+    }
     link.click();
 
     URL.revokeObjectURL(url);
@@ -850,8 +1432,14 @@ function bindEvents() {
         });
     });
 
+    els.generateViewBtn.addEventListener("click", () => switchView("generate"));
+    els.doctorViewBtn.addEventListener("click", () => switchView("doctor"));
+
+    els.doctorYamlInput.addEventListener("input", scheduleDoctor);
+
     els.addRegexFieldBtn.addEventListener("click", addRegexField);
     els.addLokiLabelBtn.addEventListener("click", addLokiLabel);
+    els.addStructuredMetadataBtn.addEventListener("click", addStructuredMetadata);
     els.copyYamlBtn.addEventListener("click", copyYAML);
     els.downloadYamlBtn.addEventListener("click", downloadYAML);
     els.themeToggleBtn.addEventListener("click", toggleTheme);
@@ -872,10 +1460,15 @@ function initDefaults() {
         els.enableLokiLabels.checked = false;
     }
 
+    if (els.enableStructuredMetadata) {
+        els.enableStructuredMetadata.checked = false;
+    }
+
     renderVisibility();
     renderRegexFields();
     renderLokiLabels();
-    generateYAML();
+    renderStructuredMetadata();
+    switchView("generate");
 }
 
 bindEvents();
