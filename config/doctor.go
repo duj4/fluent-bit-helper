@@ -9,22 +9,27 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	DoctorModeProduction = "production"
+	DoctorModeQuickTest  = "quick-test"
+)
+
 // DoctorLevel represents the severity of one doctor check.
 // These values are returned directly to the Web UI, so keep them stable.
 type DoctorLevel string
 
 const (
-	// DoctorOK means the checked field matches the recommended baseline.
+	// DoctorOK means the checked field matches the selected baseline.
 	DoctorOK DoctorLevel = "OK"
 
-	// DoctorWarn means the config is usable but not fully aligned with the recommended baseline.
+	// DoctorWarn means the config is usable but not fully aligned with the selected baseline.
 	DoctorWarn DoctorLevel = "WARN"
 
 	// DoctorError means the config is missing or misconfigured for an important baseline field.
 	DoctorError DoctorLevel = "ERROR"
 )
 
-// DoctorCheck is one structured check result returned by DoctorYAML.
+// DoctorCheck is one structured check result returned by DoctorYAMLWithMode.
 // The Web UI groups checks by Section and displays Level, Field, Message, Actual, and Expect.
 type DoctorCheck struct {
 	Section string      `json:"section"`
@@ -32,12 +37,14 @@ type DoctorCheck struct {
 	Field   string      `json:"field,omitempty"`
 	Message string      `json:"message"`
 	Actual  string      `json:"actual,omitempty"`
+	Default string      `json:"default,omitempty"`
 	Expect  string      `json:"expect,omitempty"`
 }
 
-// DoctorReport is the complete doctor result for one Fluent Bit YAML document.
+// DoctorReport is the complete doctor result for one Fluent-Bit YAML document.
 // The count fields are pre-calculated so the frontend does not need to derive them.
 type DoctorReport struct {
+	Mode         string        `json:"mode"`
 	Checks       []DoctorCheck `json:"checks"`
 	ErrorCount   int           `json:"error_count"`
 	WarningCount int           `json:"warning_count"`
@@ -47,37 +54,85 @@ type DoctorReport struct {
 // doctorCollector accumulates doctor checks and updates summary counters.
 // It keeps the checking functions simple and avoids printing from the config package.
 type doctorCollector struct {
+	mode   string
 	report DoctorReport
 }
 
-// DoctorYAML validates an existing Fluent Bit YAML against the recommended production baseline.
-// It accepts YAML content directly instead of a file path so it can be reused by the Web API.
+// DoctorYAML validates an existing Fluent-Bit YAML against the production baseline.
+// It is kept as a convenience wrapper for callers that do not provide a mode.
 func DoctorYAML(content []byte) (DoctorReport, error) {
+	return DoctorYAMLWithMode(content, DoctorModeProduction)
+}
+
+// DoctorYAMLWithMode validates an existing Fluent-Bit YAML against the selected baseline.
+// It accepts YAML content directly instead of a file path so it can be reused by the Web API.
+func DoctorYAMLWithMode(content []byte, mode string) (DoctorReport, error) {
 	if strings.TrimSpace(string(content)) == "" {
 		return DoctorReport{}, fmt.Errorf("yaml content is empty")
 	}
 
-	var cfg FluentBitConfig
-	if err := yaml.Unmarshal(content, &cfg); err != nil {
+	mode = normalizeDoctorMode(mode)
+
+	var root map[string]interface{}
+	if err := yaml.Unmarshal(content, &root); err != nil {
 		return DoctorReport{}, err
 	}
 
-	collector := &doctorCollector{}
-	collector.checkService(cfg.Service)
-	collector.checkInputs(cfg.Pipeline.Inputs)
-	collector.checkOutputs(cfg.Pipeline.Outputs)
+	collector := &doctorCollector{
+		mode: mode,
+		report: DoctorReport{
+			Mode: mode,
+		},
+	}
+
+	collector.checkRoot(root)
 
 	return collector.report, nil
 }
 
+func normalizeDoctorMode(mode string) string {
+	switch strings.TrimSpace(mode) {
+	case DoctorModeQuickTest:
+		return DoctorModeQuickTest
+	default:
+		return DoctorModeProduction
+	}
+}
+
+func (c *doctorCollector) checkRoot(root map[string]interface{}) {
+	serviceMap, hasService := asDoctorMap(root["service"])
+	if c.mode == DoctorModeQuickTest {
+		c.checkQuickTestService(serviceMap, hasService)
+	} else {
+		c.checkProductionService(serviceMap, hasService)
+	}
+
+	pipelineMap, hasPipeline := asDoctorMap(root["pipeline"])
+	if !hasPipeline {
+		c.add("Pipeline", DoctorError, "pipeline", "pipeline section is not configured", nil, nil)
+		return
+	}
+
+	inputs, _ := asDoctorList(pipelineMap["inputs"])
+	c.checkInputs(inputs)
+
+	outputs, _ := asDoctorList(pipelineMap["outputs"])
+	c.checkOutputs(outputs)
+}
+
 // add records one check and updates the corresponding OK/WARN/ERROR counter.
 func (c *doctorCollector) add(section string, level DoctorLevel, field string, message string, actual interface{}, expect interface{}) {
+	c.addWithDefault(section, level, field, message, actual, nil, expect)
+}
+
+func (c *doctorCollector) addWithDefault(section string, level DoctorLevel, field string, message string, actual interface{}, defaultValue interface{}, expect interface{}) {
 	check := DoctorCheck{
 		Section: section,
 		Level:   level,
 		Field:   field,
 		Message: message,
 		Actual:  stringifyDoctorValue(actual),
+		Default: stringifyDoctorValue(defaultValue),
 		Expect:  stringifyDoctorValue(expect),
 	}
 
@@ -93,29 +148,42 @@ func (c *doctorCollector) add(section string, level DoctorLevel, field string, m
 	}
 }
 
-// checkService validates the top-level service section.
-// These checks represent the production baseline used by flbctl-generated configs.
-func (c *doctorCollector) checkService(service Service) {
+func (c *doctorCollector) checkProductionService(serviceMap map[string]interface{}, exists bool) {
 	section := "Service"
 
-	if service == (Service{}) {
+	if !exists {
 		c.add(section, DoctorError, "service", "service section is not configured", nil, nil)
 		return
 	}
 
-	c.checkPathString(section, "log_file", service.LogFile, "Fluent-Bit's own log file is recommended for troubleshooting")
-	c.checkEqual(section, "scheduler.base", service.SchedulerBase, 5)
-	c.checkEqual(section, "scheduler.cap", service.SchedulerCap, 300)
-	c.checkPathString(section, "storage.path", service.StoragePath, "filesystem buffering directory is required when input storage.type is filesystem")
-	c.checkEqual(section, "storage.sync", service.StorageSync, "full")
-	c.checkEqual(section, "storage.delete_irrecoverable_chunks", service.StorageDeleteIrrecoverableChunks, "on")
+	c.checkOptionalPath(section, "log_file", serviceMap, "log_file is not configured; recommended for troubleshooting. Logrotate should be configured separately")
+	c.checkMapValueWithDefault(section, "log_level", serviceMap, "error", DoctorWarn)
+	c.checkMapValueWithDefault(section, "scheduler.base", serviceMap, 5, DoctorWarn)
+	c.checkMapValueWithDefault(section, "scheduler.cap", serviceMap, 300, DoctorWarn)
+	c.checkPathFromMapWithDefault(section, "storage.path", serviceMap, "${STORAGE_PATH}", DoctorWarn)
+	c.checkMapValue(section, "storage.sync", serviceMap, "full")
+	c.checkMapValue(section, "storage.delete_irrecoverable_chunks", serviceMap, "on")
+}
+
+func (c *doctorCollector) checkQuickTestService(serviceMap map[string]interface{}, exists bool) {
+	section := "Service"
+
+	if !exists {
+		c.add(section, DoctorWarn, "service", "service section is not configured; log_level debug is recommended for quick test", nil, "log_level: debug")
+		return
+	}
+
+	c.checkMapValue(section, "log_level", serviceMap, "debug")
+	c.checkShouldBeAbsent(section, "scheduler.base", serviceMap)
+	c.checkShouldBeAbsent(section, "scheduler.cap", serviceMap)
+	c.checkShouldBeAbsent(section, "storage.path", serviceMap)
 }
 
 // checkInputs validates pipeline.inputs.
 // The current baseline only supports tail input; other input plugins are skipped with a warning.
 func (c *doctorCollector) checkInputs(inputs []interface{}) {
 	if len(inputs) == 0 {
-		c.add("Inputs", DoctorError, "inputs", "inputs is empty, configure at least one input plugin", nil, nil)
+		c.add("Inputs", DoctorError, "inputs", "inputs is empty; configure at least one input plugin", nil, nil)
 		return
 	}
 
@@ -129,25 +197,34 @@ func (c *doctorCollector) checkInputs(inputs []interface{}) {
 		}
 
 		if inputMap["name"] != "tail" {
-			c.add(section, DoctorWarn, "name", "input is not tail input, skipped", inputMap["name"], "tail")
+			c.add(section, DoctorWarn, "name", "input is not tail input; skipped", inputMap["name"], "tail")
 			continue
 		}
 
 		c.checkMapValue(section, "tag", inputMap, nil)
-		c.checkPathFromMap(section, "db", inputMap, "tail offset database file is recommended")
+		c.checkPathFromMap(section, "path", inputMap, "log path to monitor")
 		c.checkMapValue(section, "skip_empty_lines", inputMap, "on")
 		c.checkMapValueMin(section, "refresh_interval", inputMap, 1, 5)
-		c.checkMapValue(section, "storage.type", inputMap, "filesystem")
 		c.checkMapValue(section, "threaded", inputMap, "on")
+
+		if c.mode == DoctorModeQuickTest {
+			c.checkShouldBeAbsent(section, "db", inputMap)
+			c.checkShouldBeAbsent(section, "storage.type", inputMap)
+			c.checkMapValue(section, "read_from_head", inputMap, "on")
+			continue
+		}
+
+		c.checkPathFromMap(section, "db", inputMap, "tail offset database file is recommended")
+		c.checkMapValueWithDefault(section, "storage.type", inputMap, "filesystem", DoctorWarn)
 		c.checkReadFromHead(section, inputMap)
 	}
 }
 
 // checkOutputs validates pipeline.outputs.
-// stdout is only lightly checked, while loki is checked against the recommended production baseline.
+// stdout is only lightly checked, while loki is checked against the selected baseline.
 func (c *doctorCollector) checkOutputs(outputs []interface{}) {
 	if len(outputs) == 0 {
-		c.add("Outputs", DoctorError, "outputs", "outputs is empty, configure at least one output plugin", nil, nil)
+		c.add("Outputs", DoctorError, "outputs", "outputs is empty; configure at least one output plugin", nil, nil)
 		return
 	}
 
@@ -165,31 +242,51 @@ func (c *doctorCollector) checkOutputs(outputs []interface{}) {
 			c.checkMapValue(section, "match", outputMap, nil)
 
 		case "loki":
-			c.checkMapValue(section, "match", outputMap, nil)
-			c.checkMapValue(section, "host", outputMap, nil)
-			c.checkMapValue(section, "port", outputMap, 443)
-			c.checkMapValue(section, "tenant_id", outputMap, nil)
-			c.checkMapValue(section, "labels", outputMap, nil)
-			c.checkMapValue(section, "tls", outputMap, "on")
-			c.checkPathFromMap(section, "tls.ca_file", outputMap, "absolute path to CA file")
-			c.checkPathFromMap(section, "tls.crt_file", outputMap, "absolute path to certificate file")
-			c.checkPathFromMap(section, "tls.key_file", outputMap, "absolute path to key file")
-			c.checkMapValue(section, "retry_limit", outputMap, "no_limits")
-			c.checkMapValueMin(section, "storage.total_limit_size", outputMap, "1G", nil)
-			c.checkMapValue(section, "net.connect_timeout", outputMap, 310)
-			c.checkMapValue(section, "net.keepalive_idle_timeout", outputMap, 300)
-			c.checkMapValue(section, "net.dns.resolver", outputMap, "ASYNC")
-			c.checkMapValue(section, "workers", outputMap, 2)
-
-			// structured_metadata is optional. If it exists, only verify that it has a value.
-			if _, exists := outputMap["structured_metadata"]; exists {
-				c.checkMapValue(section, "structured_metadata", outputMap, nil)
-			}
+			c.checkLokiOutput(section, outputMap)
 
 		default:
 			c.add(section, DoctorWarn, "name", "unknown output plugin", outputMap["name"], nil)
 		}
 	}
+}
+
+func (c *doctorCollector) checkLokiOutput(section string, outputMap map[string]interface{}) {
+	c.checkMapValue(section, "match", outputMap, nil)
+	c.checkMapValue(section, "host", outputMap, nil)
+	c.checkMapValue(section, "port", outputMap, 443)
+	c.checkMapValue(section, "tenant_id", outputMap, nil)
+	c.checkMapValue(section, "labels", outputMap, nil)
+	c.checkMapValue(section, "tls", outputMap, "on")
+	c.checkPathFromMap(section, "tls.ca_file", outputMap, "absolute path to CA file")
+	c.checkPathFromMap(section, "tls.crt_file", outputMap, "absolute path to certificate file")
+	c.checkPathFromMap(section, "tls.key_file", outputMap, "absolute path to key file")
+	c.checkMapValue(section, "retry_limit", outputMap, "no_limits")
+	c.checkMapValue(section, "net.dns.resolver", outputMap, "ASYNC")
+	c.checkMapValue(section, "workers", outputMap, 2)
+
+	if c.mode == DoctorModeQuickTest {
+		c.checkShouldBeAbsent(section, "storage.total_limit_size", outputMap)
+		c.checkShouldBeAbsent(section, "net.connect_timeout", outputMap)
+		c.checkShouldBeAbsent(section, "net.keepalive_idle_timeout", outputMap)
+	} else {
+		c.checkMapValueWithDefault(section, "storage.total_limit_size", outputMap, "1G", DoctorWarn)
+		c.checkMapValueWithDefault(section, "net.connect_timeout", outputMap, 310, DoctorWarn)
+		c.checkMapValueWithDefault(section, "net.keepalive_idle_timeout", outputMap, 300, DoctorWarn)
+	}
+
+	// structured_metadata is optional. If it exists, only verify that it has a value.
+	if _, exists := outputMap["structured_metadata"]; exists {
+		c.checkMapValue(section, "structured_metadata", outputMap, nil)
+	}
+}
+
+func (c *doctorCollector) checkShouldBeAbsent(section string, name string, inputMap map[string]interface{}) {
+	raw, exists := inputMap[name]
+	if !exists || raw == nil || strings.TrimSpace(fmt.Sprintf("%v", raw)) == "" {
+		return
+	}
+
+	c.add(section, DoctorWarn, name, fmt.Sprintf("%s can be removed for quick test", name), raw, nil)
 }
 
 // checkPathFromMap reads a path-like field from a generic map and delegates the actual path validation.
@@ -209,24 +306,56 @@ func (c *doctorCollector) checkPathFromMap(section string, name string, inputMap
 	c.checkPathString(section, name, path, notes)
 }
 
+func (c *doctorCollector) checkPathFromMapWithDefault(section string, name string, inputMap map[string]interface{}, expected interface{}, missingLevel DoctorLevel) {
+	raw, exists := inputMap[name]
+	if !exists || raw == nil || strings.TrimSpace(fmt.Sprintf("%v", raw)) == "" {
+		c.add(section, missingLevel, name, fmt.Sprintf("%s is not configured", name), nil, expected)
+		return
+	}
+
+	path, ok := raw.(string)
+	if !ok {
+		c.add(section, doctorSeverity(name), name, fmt.Sprintf("%s should be a string", name), raw, "string")
+		return
+	}
+
+	c.checkPathString(section, name, path, expected)
+}
+
+func (c *doctorCollector) checkOptionalPath(section string, name string, inputMap map[string]interface{}, missingMessage string) {
+	raw, exists := inputMap[name]
+	if !exists || raw == nil || strings.TrimSpace(fmt.Sprintf("%v", raw)) == "" {
+		c.add(section, DoctorWarn, name, missingMessage, nil, nil)
+		return
+	}
+
+	path, ok := raw.(string)
+	if !ok {
+		c.add(section, doctorSeverity(name), name, fmt.Sprintf("%s should be a string", name), raw, "string")
+		return
+	}
+
+	c.checkPathString(section, name, path, nil)
+}
+
 // checkPathString validates a path-like value without checking the server filesystem.
-// This is intentional for the Web service: the YAML paths belong to the user's Fluent Bit host,
-// not to the flbctl Web server. Therefore, we only check whether the path is configured and
+// This is intentional for the Web service: the YAML paths belong to the user's Fluent-Bit host,
+// not to the fluent-bit-helper Web server. Therefore, we only check whether the path is configured and
 // whether it looks like an absolute path or a variable-based path such as ${TLS_CA_FILE}.
-func (c *doctorCollector) checkPathString(section string, name string, path string, notes string) {
+func (c *doctorCollector) checkPathString(section string, name string, path string, expect interface{}) {
 	path = strings.TrimSpace(path)
 
 	if path == "" {
-		c.add(section, doctorSeverity(name), name, fmt.Sprintf("%s is not configured: %s", name, notes), nil, nil)
+		c.add(section, doctorSeverity(name), name, fmt.Sprintf("%s is not configured", name), nil, expect)
 		return
 	}
 
 	if !isDoctorPathAcceptable(path) {
-		c.add(section, DoctorWarn, name, fmt.Sprintf("%s should usually be an absolute path", name), path, "absolute path")
+		c.add(section, DoctorWarn, name, fmt.Sprintf("%s should usually be an absolute path", name), path, expect)
 		return
 	}
 
-	c.add(section, DoctorOK, name, fmt.Sprintf("%s is configured", name), path, nil)
+	c.add(section, DoctorOK, name, fmt.Sprintf("%s is configured", name), path, expect)
 }
 
 // checkMapValue validates a scalar field from a generic map.
@@ -255,18 +384,23 @@ func (c *doctorCollector) checkMapValue(section string, name string, inputMap ma
 	c.add(section, DoctorOK, name, fmt.Sprintf("%s = %v", name, raw), raw, expected)
 }
 
-// checkEqual validates a strongly typed field against an expected value.
-func (c *doctorCollector) checkEqual(section string, name string, got interface{}, expected interface{}) {
-	if !sameDoctorValue(got, expected) {
-		c.add(section, doctorSeverity(name), name, fmt.Sprintf("%s should be %v", name, expected), got, expected)
+func (c *doctorCollector) checkMapValueWithDefault(section string, name string, inputMap map[string]interface{}, expected interface{}, missingLevel DoctorLevel) {
+	raw, exists := inputMap[name]
+	if !exists || raw == nil || strings.TrimSpace(fmt.Sprintf("%v", raw)) == "" {
+		c.add(section, missingLevel, name, fmt.Sprintf("%s is not configured", name), nil, expected)
 		return
 	}
 
-	c.add(section, DoctorOK, name, fmt.Sprintf("%s = %v", name, got), got, expected)
+	if !sameDoctorValue(raw, expected) {
+		c.add(section, doctorSeverity(name), name, fmt.Sprintf("%s should be %v", name, expected), raw, expected)
+		return
+	}
+
+	c.add(section, DoctorOK, name, fmt.Sprintf("%s = %v", name, raw), raw, expected)
 }
 
 // checkReadFromHead handles read_from_head specially.
-// For production baseline, an omitted value is acceptable because Fluent Bit defaults it to off.
+// For production baseline, an omitted value is acceptable because Fluent-Bit defaults it to off.
 func (c *doctorCollector) checkReadFromHead(section string, inputMap map[string]interface{}) {
 	raw, exists := inputMap["read_from_head"]
 	if !exists || raw == nil {
@@ -305,7 +439,7 @@ func (c *doctorCollector) checkMapValueMin(section string, name string, inputMap
 		}
 
 		if rec, ok := recommended.(int); ok && v < rec {
-			c.add(section, DoctorOK, name, fmt.Sprintf("%s = %v, recommended >= %v", name, v, rec), v, rec)
+			c.add(section, DoctorOK, name, fmt.Sprintf("%s = %v; recommended >= %v", name, v, rec), v, rec)
 			return
 		}
 
@@ -352,6 +486,15 @@ func asDoctorMap(value interface{}) (map[string]interface{}, bool) {
 	}
 
 	return converted, true
+}
+
+func asDoctorList(value interface{}) ([]interface{}, bool) {
+	items, ok := value.([]interface{})
+	if ok {
+		return items, true
+	}
+
+	return nil, false
 }
 
 // sameDoctorValue compares YAML values with the expected baseline while handling common YAML type differences.
@@ -419,7 +562,7 @@ func parseDoctorSize(s string) (int64, error) {
 }
 
 // isDoctorPathAcceptable returns true for absolute paths or variable-based paths.
-// Variable-based paths are accepted because flbctl-generated YAML may use values such as ${TLS_CA_FILE}.
+// Variable-based paths are accepted because fluent-bit-helper-generated YAML may use values such as ${TLS_CA_FILE}.
 func isDoctorPathAcceptable(path string) bool {
 	if filepath.IsAbs(path) {
 		return true
@@ -431,11 +574,12 @@ func isDoctorPathAcceptable(path string) bool {
 // doctorErrorKeys defines fields that should be treated as ERROR when missing or invalid.
 // Fields not listed here fall back to WARN.
 var doctorErrorKeys = map[string]bool{
-	"service":      true,
-	"storage.path": true,
+	"pipeline":     true,
+	"inputs":       true,
+	"outputs":      true,
 	"tag":          true,
+	"path":         true,
 	"db":           true,
-	"storage.type": true,
 	"match":        true,
 	"host":         true,
 	"port":         true,

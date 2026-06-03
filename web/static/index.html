@@ -12,7 +12,7 @@
     <header class="topbar">
         <div>
             <h1>Fluent-Bit Helper</h1>
-            <p>Generate recommended Fluent Bit YAML or check an existing config against the production baseline.</p>
+            <p>Generate recommended Fluent-Bit YAML or diagnose existing configs against a selected baseline.</p>
         </div>
 
         <div class="topbar-actions">
@@ -67,7 +67,7 @@
                     <label>
                         Filesystem buffering directory
                         <input id="storagePath" placeholder="/d/d1/app/fluent-bit/data/storage/" />
-                        <small>This directory must already exist. Fluent Bit uses it to buffer chunks on disk.</small>
+                        <small>This directory must already exist. Fluent-Bit uses it to buffer chunks on disk.</small>
                     </label>
                 </div>
             </div>
@@ -86,7 +86,7 @@
                     <label>
                         Tail offset database file
                         <input id="dbPath" placeholder="/d/d1/app/fluent-bit/data/database/app.db" />
-                        <small>The parent directory must already exist. Fluent Bit creates or updates the database
+                        <small>The parent directory must already exist. Fluent-Bit creates or updates the database
                             file.</small>
                     </label>
                 </div>
@@ -304,8 +304,16 @@
 
             <div id="doctorForm" class="doctor-form hidden">
                 <div class="doctor-input-header">
-                    <h2>Fluent-Bit Config</h2>
-                    <p>Paste a Fluent-Bit YAML config, diagnosis updates automatically.</p>
+                    <h2>Config input</h2>
+                    <p>Paste a Fluent-Bit YAML config and select the baseline. Diagnosis updates automatically.</p>
+
+                    <label class="doctor-baseline-field">
+                        Diagnosis baseline
+                        <select id="doctorBaseline">
+                            <option value="production" selected>production</option>
+                            <option value="quick-test">quick test</option>
+                        </select>
+                    </label>
                 </div>
 
                 <textarea id="doctorYamlInput" class="doctor-yaml-input" rows="24" placeholder="Paste fluent-bit.yaml content here"></textarea>

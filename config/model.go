@@ -1,6 +1,6 @@
 package config
 
-import "flbctl/parser"
+import "fluent-bit-helper/parser"
 
 // UserInput represents user input
 type UserInput struct {
@@ -72,8 +72,8 @@ type Service struct {
 	LogFile  string `yaml:"log_file,omitempty"`
 	LogLevel string `yaml:"log_level"`
 
-	SchedulerBase int `yaml:"scheduler.base"`
-	SchedulerCap  int `yaml:"scheduler.cap"`
+	SchedulerBase int `yaml:"scheduler.base,omitempty"`
+	SchedulerCap  int `yaml:"scheduler.cap,omitempty"`
 
 	StoragePath                      string `yaml:"storage.path,omitempty"`
 	StorageSync                      string `yaml:"storage.sync,omitempty"`

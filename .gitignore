@@ -1,5 +1,6 @@
+.gitignore
 fluent-bit.yaml
-flbctl
+fluent-bit-helper
 data/
 test.json
 test.log

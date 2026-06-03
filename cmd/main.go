@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"flbctl/web"
+	"fluent-bit-helper/web"
 )
 
 func main() {

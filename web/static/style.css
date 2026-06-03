@@ -115,10 +115,10 @@ body.resizing {
 }
 
 .layout {
-    --left-width: 620px;
+    --left-width: 760px;
 
     display: grid;
-    grid-template-columns: minmax(420px, var(--left-width)) 8px minmax(520px, 1fr);
+    grid-template-columns: minmax(420px, var(--left-width)) 8px minmax(260px, 1fr);
     gap: 10px;
     padding: 18px;
     height: calc(100vh - 92px);
@@ -238,6 +238,7 @@ textarea:focus {
     box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.18);
 }
 
+
 textarea {
     resize: vertical;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -285,6 +286,14 @@ button.secondary {
 
 button.secondary:hover {
     border-color: var(--accent);
+}
+
+button:disabled,
+button:disabled:hover {
+    cursor: not-allowed;
+    opacity: 0.48;
+    border-color: var(--border);
+    transform: none;
 }
 
 button.copied {
@@ -573,6 +582,11 @@ pre {
     line-height: 1.45;
 }
 
+.doctor-baseline-field {
+    margin: 14px 0 0;
+    max-width: 260px;
+}
+
 .doctor-yaml-input {
     flex: 1;
     min-height: 620px;
@@ -603,6 +617,17 @@ pre {
 
 .doctor-error {
     color: var(--danger);
+}
+
+.doctor-baseline-note {
+    display: inline-flex;
+    margin-bottom: 18px;
+    padding: 4px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
 }
 
 .doctor-groups {

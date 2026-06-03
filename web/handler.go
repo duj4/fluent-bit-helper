@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"flbctl/config"
+	"fluent-bit-helper/config"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,10 +15,12 @@ type generateResponse struct {
 	Warnings []string `json:"warnings,omitempty"`
 }
 
-// doctorRequest is returned by the Web UI when users paste or upload an existing Fluent Bit YAML.
+// doctorRequest is submitted by the Web UI when users paste an existing Fluent-Bit YAML.
 // The backend receives YAML content directly and does not read files from the server filesystem.
 type doctorRequest struct {
-	YAML string `json:"yaml"`
+	YAML     string `json:"yaml"`
+	Mode     string `json:"mode"`
+	Baseline string `json:"baseline"`
 }
 
 // registerAPI registers all JSON APIs used by the frontend.
@@ -27,13 +29,11 @@ func registerAPI(r *gin.Engine) {
 	r.POST("/api/doctor", doctorHandler)
 }
 
-// generateHandler builds a new Fluent Bit YAML from the Web UI form payload.
+// generateHandler builds a new Fluent-Bit YAML from the Web UI form payload.
 func generateHandler(c *gin.Context) {
 	var req config.UserInput
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -58,30 +58,29 @@ func generateHandler(c *gin.Context) {
 	})
 }
 
-// doctorHandler checks an existing Fluent Bit YAML against the production baseline.
+// doctorHandler checks an existing Fluent-Bit YAML against the selected baseline.
 // It intentionally does not validate whether paths exist on the Web server, because the paths
-// belong to the target Fluent Bit host rather than to the flbctl server.
+// belong to the target Fluent-Bit host rather than to the fluent-bit-helper server.
 func doctorHandler(c *gin.Context) {
 	var req doctorRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	if strings.TrimSpace(req.YAML) == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "yaml content is empty",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "yaml content is empty"})
 		return
 	}
 
-	report, err := config.DoctorYAML([]byte(req.YAML))
+	mode := req.Mode
+	if strings.TrimSpace(mode) == "" {
+		mode = req.Baseline
+	}
+
+	report, err := config.DoctorYAMLWithMode([]byte(req.YAML), mode)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

@@ -102,6 +102,7 @@ const els = {
     tlsKeyFile: $("tlsKeyFile"),
 
     doctorYamlInput: $("doctorYamlInput"),
+    doctorBaseline: $("doctorBaseline"),
     doctorHint: $("doctorHint"),
 
     previewTitle: $("previewTitle"),
@@ -239,6 +240,7 @@ function buildGeneratePayload() {
 
     return { payload, frontendWarnings };
 }
+
 
 function isParserReady(payload) {
     const parserInput = payload.ParserInput;
@@ -846,8 +848,16 @@ function switchView(view) {
     renderWarnings([]);
     setVisible(els.yamlPreview, false);
     setVisible(els.doctorResult, true);
-    renderDoctorResult(null);
-    setStatus("", "waiting");
+
+    if (els.doctorYamlInput && els.doctorYamlInput.value.trim()) {
+        const mode = getDoctorBaselineMode();
+        setStatus("", "checking");
+        renderDoctorResult({ loading: true, mode });
+    } else {
+        renderDoctorResult(null);
+        setStatus("", "waiting");
+    }
+
     scheduleDoctor();
 }
 
@@ -878,6 +888,18 @@ function scheduleDoctor() {
     doctorDebounceTimer = setTimeout(runDoctor, 350);
 }
 
+function getDoctorBaselineMode() {
+    if (els.doctorBaseline && els.doctorBaseline.value) {
+        return els.doctorBaseline.value;
+    }
+
+    if (els.mode && els.mode.value) {
+        return els.mode.value;
+    }
+
+    return "production";
+}
+
 async function runDoctor() {
     clearDoctorHint();
     renderWarnings([]);
@@ -890,9 +912,10 @@ async function runDoctor() {
         return;
     }
 
+    const mode = getDoctorBaselineMode();
     const requestID = ++doctorRequestSeq;
     setStatus("", "checking");
-    renderDoctorResult({ loading: true });
+    renderDoctorResult({ loading: true, mode });
 
     try {
         const response = await fetch("/api/doctor", {
@@ -900,7 +923,7 @@ async function runDoctor() {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ yaml })
+            body: JSON.stringify({ yaml, mode, baseline: mode })
         });
 
         const data = await response.json();
@@ -962,8 +985,10 @@ function renderDoctorResult(report) {
     }
 
     const groups = groupDoctorChecks(checks);
+    const baselineLabel = formatDoctorBaseline(report.mode);
 
     els.doctorResult.innerHTML = `
+        <div class="doctor-baseline-note">Baseline: ${escapeHTML(baselineLabel)}</div>
         <div class="doctor-groups">
             ${groups.map((group) => `
                 <section class="doctor-group">
@@ -1075,6 +1100,14 @@ function buildDoctorDetails(check) {
     }
 
     return details.join(" ");
+}
+
+function formatDoctorBaseline(mode) {
+    if (mode === "quick-test") {
+        return "quick test";
+    }
+
+    return "production";
 }
 
 function formatDoctorReport(report) {
@@ -1351,7 +1384,7 @@ function formatDownloadTimestamp(date) {
 
 function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("flbctl.theme", theme);
+    localStorage.setItem("fluent-bit-helper.theme", theme);
 
     if (els.themeToggleBtn) {
         els.themeToggleBtn.textContent = theme === "dark" ? "Light mode" : "Dark mode";
@@ -1384,11 +1417,11 @@ function bindResizablePanels() {
         const leftWidth = event.clientX - rect.left;
 
         const min = 420;
-        const max = Math.min(900, rect.width - 560);
+        const max = Math.max(min, rect.width - 280);
         const nextWidth = Math.max(min, Math.min(max, leftWidth));
 
         els.layout.style.setProperty("--left-width", `${nextWidth}px`);
-        localStorage.setItem("flbctl.leftWidth", String(nextWidth));
+        localStorage.setItem("fluent-bit-helper.leftWidth", String(nextWidth));
     });
 
     window.addEventListener("mouseup", () => {
@@ -1400,7 +1433,7 @@ function bindResizablePanels() {
         document.body.classList.remove("resizing");
     });
 
-    const saved = Number(localStorage.getItem("flbctl.leftWidth"));
+    const saved = Number(localStorage.getItem("fluent-bit-helper.leftWidth"));
     if (saved > 0) {
         els.layout.style.setProperty("--left-width", `${saved}px`);
     }
@@ -1437,6 +1470,10 @@ function bindEvents() {
 
     els.doctorYamlInput.addEventListener("input", scheduleDoctor);
 
+    if (els.doctorBaseline) {
+        els.doctorBaseline.addEventListener("change", scheduleDoctor);
+    }
+
     els.addRegexFieldBtn.addEventListener("click", addRegexField);
     els.addLokiLabelBtn.addEventListener("click", addLokiLabel);
     els.addStructuredMetadataBtn.addEventListener("click", addStructuredMetadata);
@@ -1448,7 +1485,7 @@ function bindEvents() {
 }
 
 function initDefaults() {
-    const savedTheme = localStorage.getItem("flbctl.theme") || "dark";
+    const savedTheme = localStorage.getItem("fluent-bit-helper.theme") || "dark";
     applyTheme(savedTheme);
 
     els.mode.value = "quick-test";

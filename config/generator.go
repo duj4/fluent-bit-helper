@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"flbctl/parser"
+	"fluent-bit-helper/parser"
 
 	"gopkg.in/yaml.v3"
 )
@@ -74,13 +74,13 @@ func Build(userInput UserInput) (FluentBitConfig, error) {
 func buildBaseEnv(userInput UserInput) Env {
 	env := Env{
 		LogPath: strings.Join(userInput.LogPaths, ","),
-		DBPath:  userInput.DBPath,
 		Tag:     userInput.Tag,
 	}
 
 	if userInput.Mode == "production" {
 		env.FLBLogFile = userInput.FluentBitLogFile
 		env.StoragePath = userInput.StoragePath
+		env.DBPath = userInput.DBPath
 	}
 
 	return env
@@ -97,20 +97,25 @@ func buildLokiEnv(env Env, userInput UserInput) Env {
 }
 
 func buildService(userInput UserInput) Service {
+	if userInput.Mode == "quick-test" {
+		return Service{
+			LogLevel: "debug",
+		}
+	}
+
 	service := Service{
 		LogLevel: "error",
 
 		SchedulerBase: 5,
 		SchedulerCap:  300,
+
+		StoragePath:                      "${STORAGE_PATH}",
+		StorageSync:                      "full",
+		StorageDeleteIrrecoverableChunks: "on",
 	}
 
-	if userInput.Mode == "production" {
-		if userInput.FluentBitLogFile != "" {
-			service.LogFile = "${FLB_LOG_FILE}"
-		}
-		service.StoragePath = "${STORAGE_PATH}"
-		service.StorageSync = "full"
-		service.StorageDeleteIrrecoverableChunks = "on"
+	if userInput.FluentBitLogFile != "" {
+		service.LogFile = "${FLB_LOG_FILE}"
 	}
 
 	return service
@@ -126,20 +131,18 @@ func buildTailInput(userInput UserInput) TailInput {
 
 		SkipEmptyLines:  "on",
 		RefreshInterval: 5,
-		StorageType:     "filesystem",
 		Threaded:        "on",
-	}
-
-	if userInput.DBPath != "" {
-		tailInput.DB = "${DB_PATH}"
-	}
-
-	if userInput.ReadFromHead {
-		tailInput.ReadFromHead = "on"
 	}
 
 	if userInput.Mode == "production" {
 		tailInput.StorageType = "filesystem"
+		if userInput.DBPath != "" {
+			tailInput.DB = "${DB_PATH}"
+		}
+	}
+
+	if userInput.ReadFromHead {
+		tailInput.ReadFromHead = "on"
 	}
 
 	if userInput.EnableParser && userInput.ParserInput.EnableMultiline {
@@ -157,7 +160,7 @@ func buildStdoutOutput() StdoutOutput {
 }
 
 func buildLokiOutput(userInput UserInput) LokiOutput {
-	return LokiOutput{
+	output := LokiOutput{
 		Name:  "loki",
 		Match: "${TAG}",
 
@@ -174,14 +177,18 @@ func buildLokiOutput(userInput UserInput) LokiOutput {
 
 		RetryLimit: "no_limits",
 
-		StorageTotalLimitSize: "1G",
-
-		NetConnectTimeout:       310,
-		NetKeepaliveIdleTimeout: 30,
-		NetDNSResolver:          "ASYNC",
+		NetDNSResolver: "ASYNC",
 
 		Workers: 2,
 	}
+
+	if userInput.Mode == "production" {
+		output.StorageTotalLimitSize = "1G"
+		output.NetConnectTimeout = 310
+		output.NetKeepaliveIdleTimeout = 300
+	}
+
+	return output
 }
 
 func buildLokiLabels(userInput UserInput) string {

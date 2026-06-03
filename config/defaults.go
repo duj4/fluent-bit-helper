@@ -31,7 +31,7 @@ func BuildWarnings(input UserInput) []string {
 	if input.Mode == "quick-test" {
 		warnings = append(
 			warnings,
-			"Mode: quick-test enables read_from_head and does not configure filesystem buffering and tail offset database",
+			"Mode: quick test is intended for local validation and skips production buffering and offset tracking",
 		)
 	}
 
