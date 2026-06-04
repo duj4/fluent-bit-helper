@@ -399,8 +399,8 @@ function renderRegexFields() {
         </div>
         <label class="regex-pattern-field">
           Field value pattern
-          <input class="regex-pattern" value="${escapeAttr(field.Pattern || "")}" placeholder="Example: itsm_[A-Za-z0-9_]+, req-[A-Za-z0-9-]+, [a-f0-9]{32}" />
-          <small>Only needed for optional fields. Describe what this field value looks like, not the separator.</small>
+          <input class="regex-pattern" value="${escapeAttr(field.Pattern || "")}" placeholder="Default for optional: [^\s\[]+" />
+          <small>Optional. Leave empty to match one token that does not contain whitespace or [. Use a custom pattern for stricter matching.</small>
         </label>
       </div>
     `;
