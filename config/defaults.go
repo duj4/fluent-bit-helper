@@ -6,55 +6,55 @@ import (
 )
 
 // ApplyModeDefaults applies mode-specific defaults before config generation.
-func ApplyModeDefaults(input *UserInput) {
-	if strings.TrimSpace(input.Mode) == "" {
-		input.Mode = "production"
+func ApplyModeDefaults(userInput *UserInput) {
+	if strings.TrimSpace(userInput.Mode) == "" {
+		userInput.Mode = "production"
 	}
 
-	if input.Mode == "quick-test" {
-		input.FluentBitLogFile = ""
-		input.StoragePath = ""
-		input.DBPath = ""
-		input.ReadFromHead = true
+	if userInput.Mode == "quick-test" {
+		userInput.FluentBitLogFile = ""
+		userInput.StoragePath = ""
+		userInput.DBPath = ""
+		userInput.ReadFromHead = true
 		return
 	}
 
-	if input.Mode == "production" {
-		input.ReadFromHead = false
+	if userInput.Mode == "production" {
+		userInput.ReadFromHead = false
 	}
 }
 
 // BuildWarnings returns user-facing warnings for generated config.
-func BuildWarnings(input UserInput) []string {
+func BuildWarnings(userInput UserInput) []string {
 	var warnings []string
 
-	if input.Mode == "quick-test" {
+	if userInput.Mode == "quick-test" {
 		warnings = append(
 			warnings,
 			"Mode: quick test is intended for local validation and skips production buffering and offset tracking",
 		)
 	}
 
-	if input.Mode == "production" {
-		if strings.TrimSpace(input.FluentBitLogFile) == "" {
+	if userInput.Mode == "production" {
+		if strings.TrimSpace(userInput.FluentBitLogFile) == "" {
 			warnings = append(warnings, "Service: Fluent-Bit's own log file is not configured")
 		}
 
-		if strings.TrimSpace(input.StoragePath) == "" {
+		if strings.TrimSpace(userInput.StoragePath) == "" {
 			warnings = append(warnings, "Service: filesystem buffering directory is not configured")
 		}
 
-		if strings.TrimSpace(input.DBPath) == "" {
-			warnings = append(warnings, "Tail input: tail offset database is not configured")
+		if strings.TrimSpace(userInput.DBPath) == "" {
+			warnings = append(warnings, "Tail userInput: tail offset database is not configured")
 		}
 	}
 
-	if input.Output == "loki" && len(input.LokiLabels) > 0 {
+	if userInput.Output == "loki" && len(userInput.LokiLabels) > 0 {
 		warnings = append(warnings, "Loki output: make sure selected labels are low-cardinality fields")
 	}
 
-	if input.Output == "loki" {
-		duplicatedNames := findDuplicatedLokiNames(input.LokiLabels, input.LokiStructuredMetadata)
+	if userInput.Output == "loki" {
+		duplicatedNames := findDuplicatedLokiNames(userInput.LokiLabels, userInput.LokiStructuredMetadata)
 		if len(duplicatedNames) > 0 {
 			warnings = append(
 				warnings,

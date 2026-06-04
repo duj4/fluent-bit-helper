@@ -9,31 +9,21 @@ import (
 )
 
 type fieldMatch struct {
-	Key   string
-	Value string
-	Start int
-	End   int
+	Key      string
+	Value    string
+	Optional bool
+	Pattern  string
+	Start    int
+	End      int
 }
 
 // InferRegex builds a Fluent-Bit compatible regex from a log snippet and user-provided key/value pairs.
 //
-// Example:
-//
-// snippet:
-//
-//	2026-05-18 10:23:44 INFO [main] com.demo.App - started successfully
-//
-// fields:
-//
-//	timestamp = 2026-05-18 10:23:44
-//	level     = INFO
-//	thread    = main
-//	logger    = com.demo.App
-//	message   = started successfully
-//
-// output:
-//
-//	^(?<timestamp>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\s+(?<level>[A-Z]+)\s+\[(?<thread>[^\]]+)\]\s+(?<logger>\S+)\s+\-\s+(?<message>.*)$
+// The inference is intentionally conservative. Required fields are inferred from the
+// exact value provided by the user. Optional fields are rendered as optional capture
+// groups. For optional fields, a custom pattern is recommended because a generic
+// pattern such as \S+ may steal the first token from the message when the optional
+// field is absent.
 func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (string, error) {
 	if strings.TrimSpace(snippet) == "" {
 		return "", errors.New("snippet is empty")
@@ -68,10 +58,12 @@ func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (stri
 		}
 
 		matches = append(matches, fieldMatch{
-			Key:   sanitizeGroupName(key),
-			Value: value,
-			Start: start,
-			End:   start + len(value),
+			Key:      sanitizeGroupName(key),
+			Value:    value,
+			Optional: field.Optional,
+			Pattern:  strings.TrimSpace(field.Pattern),
+			Start:    start,
+			End:      start + len(value),
 		})
 	}
 
@@ -93,19 +85,42 @@ func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (stri
 
 		// Fixed text before this field.
 		prefix := snippet[cursor:match.Start]
-		builder.WriteString(renderLiteral(prefix))
 
-		// Named capture group.
-		builder.WriteString("(?<")
-		builder.WriteString(match.Key)
-		builder.WriteString(">")
-		builder.WriteString(inferValuePattern(match.Key, match.Value, match.End == len(snippet)))
-		builder.WriteString(")")
+		if match.Optional {
+			// Put the prefix inside the optional group.
+			//
+			// Example:
+			//   level user message
+			//
+			// Required rendering would be:
+			//   (?<level>[A-Z]+)\s+(?<user>\S+)\s+(?<message>[\s\S]*)
+			//
+			// Optional rendering should be:
+			//   (?<level>[A-Z]+)(?:\s+(?<user>custom_pattern))?\s+(?<message>[\s\S]*)
+			//
+			// If the prefix is kept outside the optional group, the generated regex
+			// would still require the separator even when the optional field is absent.
+			builder.WriteString("(?:")
+			builder.WriteString(renderLiteral(prefix))
+			builder.WriteString("(?<")
+			builder.WriteString(match.Key)
+			builder.WriteString(">")
+			builder.WriteString(inferOptionalValuePattern(match))
+			builder.WriteString(")")
+			builder.WriteString(")?")
+		} else {
+			builder.WriteString(renderLiteral(prefix))
+			builder.WriteString("(?<")
+			builder.WriteString(match.Key)
+			builder.WriteString(">")
+			builder.WriteString(inferValuePattern(match.Key, match.Value, match.End == len(snippet), match.Pattern))
+			builder.WriteString(")")
+		}
 
 		cursor = match.End
 
-		// For multiline logs, consume the final newline outside the capture group
-		// This keeps message clean while still matching the full multiline record
+		// For multiline logs, consume the final newline outside the capture group.
+		// This keeps message clean while still matching the full multiline record.
 		if enableMultiline && isLastField {
 			builder.WriteString(`\n`)
 		}
@@ -193,10 +208,56 @@ func renderLiteral(s string) string {
 	return builder.String()
 }
 
+func inferOptionalValuePattern(match fieldMatch) string {
+	if pattern := normalizeCustomPattern(match.Pattern); pattern != "" {
+		return pattern
+	}
+
+	// Without a custom pattern, keep optional matching conservative by matching
+	// the exact sample value. This avoids a generic \S+ optional field stealing
+	// the first message token when the optional field is absent.
+	//
+	// Users can provide a custom pattern such as:
+	//   itsm_[A-Za-z0-9_]+
+	// when the optional value may vary across log lines.
+	return regexp.QuoteMeta(match.Value)
+}
+
+func normalizeCustomPattern(pattern string) string {
+	pattern = strings.TrimSpace(pattern)
+	if pattern == "" {
+		return ""
+	}
+
+	// Allow users to paste either:
+	//   itsm_[A-Za-z0-9_]+
+	// or:
+	//   /itsm_[A-Za-z0-9_]+/
+	if len(pattern) >= 2 && strings.HasPrefix(pattern, "/") && strings.HasSuffix(pattern, "/") {
+		return strings.TrimSuffix(strings.TrimPrefix(pattern, "/"), "/")
+	}
+
+	return pattern
+}
+
+func isMessageField(key string) bool {
+	lowerKey := strings.ToLower(key)
+
+	return strings.Contains(lowerKey, "message") || strings.Contains(lowerKey, "msg")
+}
+
+func inferMessageRegex() string {
+	return `[\s\S]*`
+}
+
 // inferValuePattern infers a regex pattern for one field value.
 //
 // This is intentionally opinionated and conservative.
-func inferValuePattern(key string, value string, isLast bool) string {
+func inferValuePattern(key string, value string, isLast bool, customPattern string) string {
+	if pattern := normalizeCustomPattern(customPattern); pattern != "" {
+		return pattern
+	}
+
 	lowerKey := strings.ToLower(key)
 
 	switch {
@@ -212,8 +273,8 @@ func inferValuePattern(key string, value string, isLast bool) string {
 	case looksLikeFloat(value):
 		return `\d+(?:\.\d+)?`
 
-	case strings.Contains(lowerKey, "message") || strings.Contains(lowerKey, "msg"):
-		return `[\s\S]*`
+	case isMessageField(lowerKey):
+		return inferMessageRegex()
 
 	case isLast:
 		// Last field is often message-like.

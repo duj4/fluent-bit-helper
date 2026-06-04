@@ -26,6 +26,7 @@ type UserInput struct {
 	TLSCAFile              string
 	TLSCrtFile             string
 	TLSKeyFile             string
+	LokiLineFormat         string
 	LokiLabels             []LokiLabel
 	LokiStructuredMetadata []LokiStructuredMetadata
 }
@@ -121,6 +122,8 @@ type LokiOutput struct {
 	TenantID           string `yaml:"tenant_id,omitempty"`
 	Labels             string `yaml:"labels,omitempty"`
 	StructuredMetadata string `yaml:"structured_metadata,omitempty"`
+
+	LineFormat string `yaml:"line_format,omitempty"`
 
 	TLS        string `yaml:"tls,omitempty"`
 	TLSCAFile  string `yaml:"tls.ca_file,omitempty"`

@@ -24,8 +24,10 @@ type ParserInput struct {
 
 // RegexField represents one user-defined key/value pair.
 type RegexField struct {
-	Key   string
-	Value string
+	Key      string
+	Value    string
+	Optional bool
+	Pattern  string
 }
 
 // Parser represents a signle Fluent-Bit parser configuration

@@ -712,3 +712,59 @@ pre {
     color: var(--text);
     font-weight: 800;
 }
+
+
+/* Regex parser field editor */
+.regex-field-row {
+    margin-bottom: 16px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.24);
+}
+
+:root[data-theme="light"] .regex-field-row {
+    background: rgba(243, 244, 246, 0.7);
+}
+
+.regex-field-main {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr auto;
+    gap: 10px;
+    align-items: end;
+}
+
+.regex-field-main label {
+    margin-bottom: 0;
+}
+
+.regex-field-main .remove-btn {
+    height: 44px;
+}
+
+.regex-field-extra {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 12px;
+    align-items: start;
+    margin-top: 12px;
+}
+
+.regex-optional-row {
+    margin: 28px 0 0;
+}
+
+.regex-pattern-field {
+    margin-bottom: 0;
+}
+
+@media (max-width: 1080px) {
+    .regex-field-main,
+    .regex-field-extra {
+        grid-template-columns: 1fr;
+    }
+
+    .regex-optional-row {
+        margin-top: 0;
+    }
+}

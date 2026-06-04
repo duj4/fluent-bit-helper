@@ -30,6 +30,7 @@ const state = {
     TLSCAFile: "",
     TLSCrtFile: "",
     TLSKeyFile: "",
+    LokiLineFormat: "json",
     LokiLabels: [],
     LokiStructuredMetadata: []
 };
@@ -100,6 +101,7 @@ const els = {
     tlsCAFile: $("tlsCAFile"),
     tlsCrtFile: $("tlsCrtFile"),
     tlsKeyFile: $("tlsKeyFile"),
+    lokiLineFormat: $("lokiLineFormat"),
 
     doctorYamlInput: $("doctorYamlInput"),
     doctorBaseline: $("doctorBaseline"),
@@ -115,6 +117,7 @@ const els = {
 };
 
 let latestYaml = "";
+let generateIsValid = false;
 let activeView = "generate";
 let debounceTimer = null;
 let doctorDebounceTimer = null;
@@ -183,6 +186,7 @@ function syncStateFromDOM() {
     state.TLSCAFile = els.tlsCAFile.value.trim();
     state.TLSCrtFile = els.tlsCrtFile.value.trim();
     state.TLSKeyFile = els.tlsKeyFile.value.trim();
+    state.LokiLineFormat = normalizeLokiLineFormat(els.lokiLineFormat ? els.lokiLineFormat.value : "json");
     state.LokiLabels = collectLokiLabels();
     state.LokiStructuredMetadata = collectStructuredMetadata();
     removeStructuredMetadataFieldsAlreadyUsedAsLabels();
@@ -241,6 +245,14 @@ function buildGeneratePayload() {
     return { payload, frontendWarnings };
 }
 
+
+function normalizeLokiLineFormat(value) {
+    if (value === "key_value") {
+        return "key_value";
+    }
+
+    return "json";
+}
 
 function isParserReady(payload) {
     const parserInput = payload.ParserInput;
@@ -355,9 +367,11 @@ function collectRegexFields() {
     return [...els.regexFields.querySelectorAll(".regex-field-row")]
         .map((row) => ({
             Key: row.querySelector(".regex-key").value.trim(),
-            Value: row.querySelector(".regex-value").value.trim()
+            Value: row.querySelector(".regex-value").value.trim(),
+            Optional: row.querySelector(".regex-optional")?.checked || false,
+            Pattern: row.querySelector(".regex-pattern")?.value.trim() || ""
         }))
-        .filter((f) => f.Key !== "" || f.Value !== "");
+        .filter((f) => f.Key !== "" || f.Value !== "" || f.Pattern !== "");
 }
 
 function renderRegexFields() {
@@ -365,17 +379,30 @@ function renderRegexFields() {
 
     state.ParserInput.RegexFields.forEach((field, index) => {
         const row = document.createElement("div");
-        row.className = "row regex-field-row";
+        row.className = "regex-field-row";
         row.innerHTML = `
-      <label>
-        Field name
-        <input class="regex-key" value="${escapeAttr(field.Key)}" placeholder="${escapeAttr(suggestRegexFieldName(index))}" />
-      </label>
-      <label>
-        Exact value
-        <input class="regex-value" value="${escapeAttr(field.Value)}" placeholder="${escapeAttr(suggestRegexFieldValue(index))}" />
-      </label>
-      <button type="button" class="remove-btn">Remove</button>
+      <div class="regex-field-main">
+        <label>
+          Field name
+          <input class="regex-key" value="${escapeAttr(field.Key || "")}" placeholder="${escapeAttr(suggestRegexFieldName(index))}" />
+        </label>
+        <label>
+          Exact value
+          <input class="regex-value" value="${escapeAttr(field.Value || "")}" placeholder="${escapeAttr(suggestRegexFieldValue(index))}" />
+        </label>
+        <button type="button" class="remove-btn">Remove</button>
+      </div>
+      <div class="regex-field-extra">
+        <div class="checkbox-row regex-optional-row">
+          <input class="regex-optional" id="regexOptional${index}" type="checkbox" ${field.Optional ? "checked" : ""} />
+          <label for="regexOptional${index}">Optional field</label>
+        </div>
+        <label class="regex-pattern-field">
+          Field value pattern
+          <input class="regex-pattern" value="${escapeAttr(field.Pattern || "")}" placeholder="Example: itsm_[A-Za-z0-9_]+, req-[A-Za-z0-9-]+, [a-f0-9]{32}" />
+          <small>Only needed for optional fields. Describe what this field value looks like, not the separator.</small>
+        </label>
+      </div>
     `;
 
         row.querySelector(".remove-btn").addEventListener("click", () => {
@@ -395,7 +422,19 @@ function renderRegexFields() {
                 scheduleGenerate();
             });
 
+            input.addEventListener("change", () => {
+                state.ParserInput.RegexFields = collectRegexFields();
+                renderRegexTimeOptions();
+                renderLokiLabels();
+                renderStructuredMetadata();
+                scheduleGenerate();
+            });
+
             input.addEventListener("blur", () => {
+                if (input.type === "checkbox") {
+                    return;
+                }
+
                 const trimmed = input.value.trim();
                 if (input.value !== trimmed) {
                     input.value = trimmed;
@@ -659,7 +698,7 @@ function buildStructuredMetadataFieldOptions(current, index) {
 
 function addRegexField() {
     state.ParserInput.RegexFields = collectRegexFields();
-    state.ParserInput.RegexFields.push({ Key: "", Value: "" });
+    state.ParserInput.RegexFields.push({ Key: "", Value: "", Optional: false, Pattern: "" });
     renderRegexFields();
     scheduleGenerate();
 }
@@ -845,19 +884,12 @@ function switchView(view) {
     }
 
     latestYaml = "";
+    clearRequiredFieldErrors();
     renderWarnings([]);
     setVisible(els.yamlPreview, false);
     setVisible(els.doctorResult, true);
-
-    if (els.doctorYamlInput && els.doctorYamlInput.value.trim()) {
-        const mode = getDoctorBaselineMode();
-        setStatus("", "checking");
-        renderDoctorResult({ loading: true, mode });
-    } else {
-        renderDoctorResult(null);
-        setStatus("", "waiting");
-    }
-
+    renderDoctorResult(null);
+    setStatus("", "waiting");
     scheduleDoctor();
 }
 
@@ -1384,7 +1416,7 @@ function formatDownloadTimestamp(date) {
 
 function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("fluent-bit-helper.theme", theme);
+    localStorage.setItem("flbctl.theme", theme);
 
     if (els.themeToggleBtn) {
         els.themeToggleBtn.textContent = theme === "dark" ? "Light mode" : "Dark mode";
@@ -1421,7 +1453,7 @@ function bindResizablePanels() {
         const nextWidth = Math.max(min, Math.min(max, leftWidth));
 
         els.layout.style.setProperty("--left-width", `${nextWidth}px`);
-        localStorage.setItem("fluent-bit-helper.leftWidth", String(nextWidth));
+        localStorage.setItem("flbctl.leftWidth", String(nextWidth));
     });
 
     window.addEventListener("mouseup", () => {
@@ -1433,7 +1465,7 @@ function bindResizablePanels() {
         document.body.classList.remove("resizing");
     });
 
-    const saved = Number(localStorage.getItem("fluent-bit-helper.leftWidth"));
+    const saved = Number(localStorage.getItem("flbctl.leftWidth"));
     if (saved > 0) {
         els.layout.style.setProperty("--left-width", `${saved}px`);
     }
@@ -1485,7 +1517,7 @@ function bindEvents() {
 }
 
 function initDefaults() {
-    const savedTheme = localStorage.getItem("fluent-bit-helper.theme") || "dark";
+    const savedTheme = localStorage.getItem("flbctl.theme") || "dark";
     applyTheme(savedTheme);
 
     els.mode.value = "quick-test";
@@ -1499,6 +1531,10 @@ function initDefaults() {
 
     if (els.enableStructuredMetadata) {
         els.enableStructuredMetadata.checked = false;
+    }
+
+    if (els.lokiLineFormat) {
+        els.lokiLineFormat.value = "json";
     }
 
     renderVisibility();

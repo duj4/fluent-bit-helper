@@ -12,7 +12,7 @@
     <header class="topbar">
         <div>
             <h1>Fluent-Bit Helper</h1>
-            <p>Generate recommended Fluent-Bit YAML or diagnose existing configs against a selected baseline.</p>
+            <p>Generate recommended Fluent Bit YAML or diagnose existing configs against a selected baseline.</p>
         </div>
 
         <div class="topbar-actions">
@@ -67,7 +67,7 @@
                     <label>
                         Filesystem buffering directory
                         <input id="storagePath" placeholder="/d/d1/app/fluent-bit/data/storage/" />
-                        <small>This directory must already exist. Fluent-Bit uses it to buffer chunks on disk.</small>
+                        <small>This directory must already exist. Fluent Bit uses it to buffer chunks on disk.</small>
                     </label>
                 </div>
             </div>
@@ -86,7 +86,7 @@
                     <label>
                         Tail offset database file
                         <input id="dbPath" placeholder="/d/d1/app/fluent-bit/data/database/app.db" />
-                        <small>The parent directory must already exist. Fluent-Bit creates or updates the database
+                        <small>The parent directory must already exist. Fluent Bit creates or updates the database
                             file.</small>
                     </label>
                 </div>
@@ -140,14 +140,15 @@
 
                     <div id="regexParserBlock" class="hidden">
                         <label>
-                            Sample log
+                            Representative sample log
                             <textarea id="snippet" rows="5" placeholder="Paste one single-line log example"></textarea>
+                            <small>Use a representative line for regex inference. If a field may be missing in other log lines, mark it as optional and provide a custom regex pattern when needed.</small>
                         </label>
 
                         <div class="table-header">
                             <div>
                                 <h3>Extracted fields</h3>
-                                <small>Each exact value must appear exactly once in the sample log.</small>
+                                <small>Each exact value must appear exactly once in the sample log. Optional fields are useful when a token may be missing in some log lines.</small>
                             </div>
 
                             <button id="addRegexFieldBtn" class="secondary" type="button">Add field</button>
@@ -235,6 +236,18 @@
                     <input id="tlsKeyFile" placeholder="/path/to/systemid.key" />
                 </label>
 
+                <label>
+                    Line format
+                    <select id="lokiLineFormat">
+                        <option value="json">json</option>
+                        <option value="key_value">key_value</option>
+                    </select>
+                    <small>
+                        Use <code>json</code> for native JSON logs or simple single-line logs. Use <code>key_value</code>
+                        if the original log contains multiline content such as stack traces.
+                    </small>
+                </label>
+
                 <div id="lokiLabelBlock" class="hidden">
                     <div class="checkbox-row">
                         <input id="enableLokiLabels" type="checkbox" />
@@ -305,7 +318,7 @@
             <div id="doctorForm" class="doctor-form hidden">
                 <div class="doctor-input-header">
                     <h2>Config input</h2>
-                    <p>Paste a Fluent-Bit YAML config and select the baseline. Diagnosis updates automatically.</p>
+                    <p>Paste a Fluent Bit YAML config and select the baseline. Diagnosis updates automatically.</p>
 
                     <label class="doctor-baseline-field">
                         Diagnosis baseline

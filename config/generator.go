@@ -170,6 +170,8 @@ func buildLokiOutput(userInput UserInput) LokiOutput {
 		Labels:             buildLokiLabels(userInput),
 		StructuredMetadata: buildLokiStructuredMetadata(userInput),
 
+		LineFormat: buildLokiLineFormat(userInput),
+
 		TLS:        "on",
 		TLSCAFile:  "${TLS_CA_FILE}",
 		TLSCrtFile: "${TLS_CRT_FILE}",
@@ -225,6 +227,17 @@ func buildLokiStructuredMetadata(UserInput UserInput) string {
 	}
 
 	return strings.Join(metadata, ", ")
+}
+
+func buildLokiLineFormat(userInput UserInput) string {
+	switch strings.TrimSpace(userInput.LokiLineFormat) {
+	case "key_value":
+		return "key_value"
+	case "json":
+		return "json"
+	default:
+		return "json"
+	}
 }
 
 // ToYAML renders FluentBitConfig into YAML.
