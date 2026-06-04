@@ -884,7 +884,6 @@ function switchView(view) {
     }
 
     latestYaml = "";
-    clearRequiredFieldErrors();
     renderWarnings([]);
     setVisible(els.yamlPreview, false);
     setVisible(els.doctorResult, true);
