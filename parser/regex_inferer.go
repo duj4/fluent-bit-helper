@@ -326,6 +326,10 @@ func inferValuePattern(key string, value string, isLast bool) string {
 }
 
 func looksLikeTimestamp(value string) bool {
+	if _, ok := inferTimeFormatFromShape(value); ok {
+		return true
+	}
+
 	patterns := []*regexp.Regexp{
 		regexp.MustCompile(`^\d{4}[-/]\d{2}[-/]\d{2}[T\s_]\d{2}:\d{2}:\d{2}`),
 		regexp.MustCompile(`^\d{4}[-/]\d{2}[-/]\d{2}$`),
@@ -341,6 +345,10 @@ func looksLikeTimestamp(value string) bool {
 }
 
 func inferTimestampRegex(value string) string {
+	if regex, ok := inferTimestampRegexFromShape(value); ok {
+		return regex
+	}
+
 	tokens := Tokenize(value)
 
 	var builder strings.Builder
@@ -398,4 +406,43 @@ func looksLikeInteger(value string) bool {
 
 func looksLikeFloat(value string) bool {
 	return regexp.MustCompile(`^\d+\.\d+$`).MatchString(value)
+}
+
+func inferTimestampRegexFromShape(value string) (string, bool) {
+	value = strings.TrimSpace(value)
+
+	switch {
+	case reMonthNameDateTime.MatchString(value):
+		return withTimestampRegexSuffix(value, `\w+\s+\d+\s+\d{2}:\d{2}:\d{2}`), true
+
+	case reNumericDateTime.MatchString(value):
+		separator := `[-\/]`
+		if matches := reNumericDateTime.FindStringSubmatch(value); len(matches) > 1 {
+			separator = regexp.QuoteMeta(matches[1])
+		}
+
+		return withTimestampRegexSuffix(value, `\d+`+separator+`\d+\s+\d{2}:\d{2}:\d{2}`), true
+
+	case reTimeOnly.MatchString(value):
+		return withTimestampRegexSuffix(value, `\d{2}:\d{2}:\d{2}`), true
+
+	default:
+		return "", false
+	}
+}
+
+func withTimestampRegexSuffix(value string, regex string) string {
+	if match := reTimestampFraction.FindString(value); match != "" {
+		if strings.HasPrefix(match, ",") {
+			regex += `,\d+`
+		} else {
+			regex += `\.\d+`
+		}
+	}
+
+	if reTimestampTimezone.MatchString(value) {
+		regex += `\s*(?:Z|z|[+-]\d{2}:?\d{2})`
+	}
+
+	return regex
 }

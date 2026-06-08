@@ -2,11 +2,25 @@ package parser
 
 import (
 	"errors"
+	"regexp"
 	"strings"
+)
+
+var (
+	reMonthNameDateTime = regexp.MustCompile(`^\w+\s+\d+\s+\d{2}:\d{2}:\d{2}(?:[,.]\d+)?(?:\s*(?:Z|z|[+-]\d{2}:?\d{2}))?$`)
+	reNumericDateTime   = regexp.MustCompile(`^\d{1,2}([-\/])\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:[,.]\d+)?(?:\s*(?:Z|z|[+-]\d{2}:?\d{2}))?$`)
+	reTimeOnly          = regexp.MustCompile(`^\d{2}:\d{2}:\d{2}(?:[,.]\d+)?(?:\s*(?:Z|z|[+-]\d{2}:?\d{2}))?$`)
+	reTimestampFraction = regexp.MustCompile(`[,.]\d+`)
+	reTimestampTimezone = regexp.MustCompile(`(?:Z|z|[+-]\d{2}:?\d{2})$`)
+	reSpacedTimezone    = regexp.MustCompile(`\s+(?:Z|z|[+-]\d{2}:?\d{2})$`)
 )
 
 // InferTimeFormat converts timestamp value into Fluent-Bit time_format
 func InferTimeFormat(value string) (string, error) {
+	if format, ok := inferTimeFormatFromShape(value); ok {
+		return format, nil
+	}
+
 	tokens := Tokenize(value)
 	if len(tokens) == 0 {
 		return "", errors.New("failed to tokenize timestamp")
@@ -73,4 +87,47 @@ func InferTimeFormat(value string) (string, error) {
 	}
 
 	return builder.String(), nil
+}
+
+func inferTimeFormatFromShape(value string) (string, bool) {
+	value = strings.TrimSpace(value)
+
+	switch {
+	case reMonthNameDateTime.MatchString(value):
+		return withTimestampSuffix(value, "%b %e %H:%M:%S"), true
+
+	case reNumericDateTime.MatchString(value):
+		separator := "-"
+		if matches := reNumericDateTime.FindStringSubmatch(value); len(matches) > 1 {
+			separator = matches[1]
+		}
+
+		return withTimestampSuffix(value, "%m"+separator+"%d %H:%M:%S"), true
+
+	case reTimeOnly.MatchString(value):
+		return withTimestampSuffix(value, "%H:%M:%S"), true
+
+	default:
+		return "", false
+	}
+}
+
+func withTimestampSuffix(value string, format string) string {
+	if match := reTimestampFraction.FindString(value); match != "" {
+		if strings.HasPrefix(match, ",") {
+			format += ",%L"
+		} else {
+			format += ".%L"
+		}
+	}
+
+	if reTimestampTimezone.MatchString(value) {
+		if reSpacedTimezone.MatchString(value) {
+			format += " %z"
+		} else {
+			format += "%z"
+		}
+	}
+
+	return format
 }
