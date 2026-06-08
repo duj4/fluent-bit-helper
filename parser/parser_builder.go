@@ -45,7 +45,7 @@ func BuildParser(userInput ParserInput) (Parser, error) {
 func BuildFilter(userInput ParserInput) Filter {
 	return Filter{
 		Name:        "parser",
-		Match:       userInput.Match,
+		Match:       "${TAG}",
 		KeyName:     userInput.KeyName,
 		Parser:      userInput.ParserName,
 		ReserveData: "on",

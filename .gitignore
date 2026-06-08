@@ -2,6 +2,6 @@
 fluent-bit.yaml
 fluent-bit-helper
 data/
-test.json
-test.log
+test*.json
+test*.log
 vendor/
