@@ -211,29 +211,44 @@
 
                 <div class="grid two">
                     <label>
-                        Loki endpoint
+                        Loki instance
                         <input id="lokiHost" placeholder="loki.example.internal" />
+                        <small>
+                            See
+                            <a href="https://docs.srv.ms.com.cn/cod-esm-o11y/observability-docs/LaaS/reference/instance.html"
+                                target="_blank" rel="noreferrer">LaaS instance documentation</a>
+                            for instance details. Paste the instance host only, without <code>https://</code>.
+                        </small>
                     </label>
 
                     <label>
                         TenantID
                         <input id="tenantID" placeholder="tenant-id" />
+                        <small>
+                            See
+                            <a href="https://docs.srv.ms.com.cn/cod-esm-o11y/observability-docs/LaaS/reference/ticket.html#laas-new"
+                                target="_blank" rel="noreferrer">LaaS ticket documentation</a>
+                            for TenantID provisioning.
+                        </small>
                     </label>
                 </div>
 
                 <label>
                     TLS CA file
                     <input id="tlsCAFile" placeholder="/etc/pki/ca-trust/source/anchors/katello-server-ca.pem" />
+                    <small>Linux users can usually use <code>/etc/pki/ca-trust/source/anchors/katello-server-ca.pem</code>.</small>
                 </label>
 
                 <label>
                     TLS Cert file
                     <input id="tlsCrtFile" placeholder="/path/to/systemid.crt" />
+                    <small>Path to the user's systemid certificate file.</small>
                 </label>
 
                 <label>
                     TLS Key file
                     <input id="tlsKeyFile" placeholder="/path/to/systemid.key" />
+                    <small>Path to the user's systemid private key file.</small>
                 </label>
 
                 <label>

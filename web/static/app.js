@@ -138,6 +138,10 @@ function parseLogPaths(raw) {
         .filter(Boolean);
 }
 
+function normalizeLokiInstance(value) {
+    return value.trim().replace(/^https?:\/\/(.+)$/i, "$1");
+}
+
 function syncStateFromDOM() {
     const isQuickTest = els.mode.value === "quick-test";
 
@@ -181,7 +185,11 @@ function syncStateFromDOM() {
         state.ParserInput.MultilineParserName = els.multilineParserName.value.trim();
     }
 
-    state.LokiHost = els.lokiHost.value.trim();
+    state.LokiHost = normalizeLokiInstance(els.lokiHost.value);
+    if (els.lokiHost.value !== state.LokiHost) {
+        els.lokiHost.value = state.LokiHost;
+    }
+
     state.TenantID = els.tenantID.value.trim();
     state.TLSCAFile = els.tlsCAFile.value.trim();
     state.TLSCrtFile = els.tlsCrtFile.value.trim();
