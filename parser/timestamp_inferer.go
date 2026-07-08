@@ -7,18 +7,23 @@ import (
 )
 
 var (
-	reMonthNameDateTime = regexp.MustCompile(`^\w+\s+\d+\s+\d{2}:\d{2}:\d{2}(?:[,.]\d+)?(?:\s*(?:Z|z|[+-]\d{2}:?\d{2}))?$`)
-	reNumericDateTime   = regexp.MustCompile(`^\d{1,2}([-\/])\d{1,2}\s+\d{2}:\d{2}:\d{2}(?:[,.]\d+)?(?:\s*(?:Z|z|[+-]\d{2}:?\d{2}))?$`)
-	reTimeOnly          = regexp.MustCompile(`^\d{2}:\d{2}:\d{2}(?:[,.]\d+)?(?:\s*(?:Z|z|[+-]\d{2}:?\d{2}))?$`)
-	reTimestampFraction = regexp.MustCompile(`[,.]\d+`)
-	reTimestampTimezone = regexp.MustCompile(`(?:Z|z|[+-]\d{2}:?\d{2})$`)
-	reSpacedTimezone    = regexp.MustCompile(`\s+(?:Z|z|[+-]\d{2}:?\d{2})$`)
+	reTimestampWord = regexp.MustCompile(`^[A-Za-z]+`)
 )
+
+type timestampPart struct {
+	Kind  string
+	Value string
+}
+
+type rawTimestampToken struct {
+	Kind  string
+	Value string
+}
 
 // InferTimeFormat converts timestamp value into Fluent-Bit time_format
 func InferTimeFormat(value string) (string, error) {
-	if format, ok := inferTimeFormatFromShape(value); ok {
-		return format, nil
+	if parts, ok := inferTimestampParts(value); ok {
+		return renderTimeFormat(parts), nil
 	}
 
 	tokens := Tokenize(value)
@@ -89,45 +94,270 @@ func InferTimeFormat(value string) (string, error) {
 	return builder.String(), nil
 }
 
-func inferTimeFormatFromShape(value string) (string, bool) {
-	value = strings.TrimSpace(value)
+func inferTimestampParts(value string) ([]timestampPart, bool) {
+	tokens := lexTimestamp(value)
+	if len(tokens) == 0 {
+		return nil, false
+	}
 
-	switch {
-	case reMonthNameDateTime.MatchString(value):
-		return withTimestampSuffix(value, "%b %e %H:%M:%S"), true
+	timeStart := findTimeStart(tokens)
+	if timeStart < 0 {
+		return inferDateOnlyParts(tokens)
+	}
 
-	case reNumericDateTime.MatchString(value):
-		separator := "-"
-		if matches := reNumericDateTime.FindStringSubmatch(value); len(matches) > 1 {
-			separator = matches[1]
+	dateKinds, ok := inferDatePartKinds(tokens[:timeStart])
+	if !ok {
+		return nil, false
+	}
+
+	parts := make([]timestampPart, 0, len(tokens))
+
+	for i := 0; i < timeStart; i++ {
+		if kind, ok := dateKinds[i]; ok {
+			parts = append(parts, timestampPart{Kind: kind, Value: tokens[i].Value})
+			continue
 		}
 
-		return withTimestampSuffix(value, "%m"+separator+"%d %H:%M:%S"), true
+		parts = append(parts, rawTokenPart(tokens[i]))
+	}
 
-	case reTimeOnly.MatchString(value):
-		return withTimestampSuffix(value, "%H:%M:%S"), true
+	parts = append(parts,
+		timestampPart{Kind: "hour", Value: tokens[timeStart].Value},
+		rawTokenPart(tokens[timeStart+1]),
+		timestampPart{Kind: "minute", Value: tokens[timeStart+2].Value},
+		rawTokenPart(tokens[timeStart+3]),
+		timestampPart{Kind: "second", Value: tokens[timeStart+4].Value},
+	)
 
+	for i := timeStart + 5; i < len(tokens); i++ {
+		parts = append(parts, rawTokenPart(tokens[i]))
+	}
+
+	return parts, true
+}
+
+func lexTimestamp(value string) []rawTimestampToken {
+	value = strings.TrimSpace(value)
+	var tokens []rawTimestampToken
+
+	for i := 0; i < len(value); {
+		remaining := value[i:]
+
+		if loc := reTimezone.FindStringIndex(remaining); loc != nil && loc[0] == 0 && shouldTreatAsTimezone(tokens) {
+			tokens = append(tokens, rawTimestampToken{Kind: "timezone", Value: remaining[:loc[1]]})
+			i += loc[1]
+			continue
+		}
+
+		if loc := reMillisecond.FindStringIndex(remaining); loc != nil && loc[0] == 0 {
+			tokens = append(tokens, rawTimestampToken{Kind: "fraction", Value: remaining[:loc[1]]})
+			i += loc[1]
+			continue
+		}
+
+		if loc := reNumber.FindStringIndex(remaining); loc != nil && loc[0] == 0 {
+			tokens = append(tokens, rawTimestampToken{Kind: "number", Value: remaining[:loc[1]]})
+			i += loc[1]
+			continue
+		}
+
+		if loc := reTimestampWord.FindStringIndex(remaining); loc != nil && loc[0] == 0 {
+			tokens = append(tokens, rawTimestampToken{Kind: "word", Value: remaining[:loc[1]]})
+			i += loc[1]
+			continue
+		}
+
+		tokens = append(tokens, rawTimestampToken{Kind: "literal", Value: string(value[i])})
+		i++
+	}
+
+	return tokens
+}
+
+func shouldTreatAsTimezone(tokens []rawTimestampToken) bool {
+	i := len(tokens) - 1
+	for i >= 0 && tokens[i].Kind == "literal" && isWhitespaceLiteral(tokens[i].Value) {
+		i--
+	}
+
+	if i < 0 {
+		return false
+	}
+
+	if tokens[i].Kind == "fraction" {
+		return true
+	}
+
+	return i >= 4 &&
+		tokens[i].Kind == "number" &&
+		tokens[i-1].Value == ":" &&
+		tokens[i-2].Kind == "number" &&
+		tokens[i-3].Value == ":" &&
+		tokens[i-4].Kind == "number"
+}
+
+func findTimeStart(tokens []rawTimestampToken) int {
+	for i := 0; i+4 < len(tokens); i++ {
+		if tokens[i].Kind == "number" &&
+			tokens[i+1].Value == ":" &&
+			tokens[i+2].Kind == "number" &&
+			tokens[i+3].Value == ":" &&
+			tokens[i+4].Kind == "number" {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func inferDateOnlyParts(tokens []rawTimestampToken) ([]timestampPart, bool) {
+	dateKinds, ok := inferDatePartKinds(tokens)
+	if !ok || len(dateKinds) == 0 {
+		return nil, false
+	}
+
+	parts := make([]timestampPart, 0, len(tokens))
+	for i, token := range tokens {
+		if kind, ok := dateKinds[i]; ok {
+			parts = append(parts, timestampPart{Kind: kind, Value: token.Value})
+			continue
+		}
+
+		parts = append(parts, rawTokenPart(token))
+	}
+
+	return parts, true
+}
+
+func inferDatePartKinds(tokens []rawTimestampToken) (map[int]string, bool) {
+	var indexes []int
+	for i, token := range tokens {
+		if token.Kind == "number" || isMonthNameToken(token) {
+			indexes = append(indexes, i)
+		}
+	}
+
+	if len(indexes) == 0 {
+		return map[int]string{}, true
+	}
+
+	kinds := make(map[int]string, len(indexes))
+
+	if len(indexes) == 2 {
+		first := tokens[indexes[0]]
+		second := tokens[indexes[1]]
+
+		switch {
+		case isMonthNameToken(first) && second.Kind == "number":
+			kinds[indexes[0]] = "month_name"
+			kinds[indexes[1]] = "day_space"
+			return kinds, true
+
+		case first.Kind == "number" && second.Kind == "number":
+			kinds[indexes[0]] = "month"
+			kinds[indexes[1]] = "day"
+			return kinds, true
+		}
+	}
+
+	if len(indexes) != 3 {
+		return nil, false
+	}
+
+	first := tokens[indexes[0]]
+	second := tokens[indexes[1]]
+	third := tokens[indexes[2]]
+
+	switch {
+	case isFourDigitYear(first) && second.Kind == "number" && third.Kind == "number":
+		kinds[indexes[0]] = "year"
+		kinds[indexes[1]] = "month"
+		kinds[indexes[2]] = "day"
+		return kinds, true
+
+	case first.Kind == "number" && isMonthNameToken(second) && isFourDigitYear(third):
+		kinds[indexes[0]] = "day"
+		kinds[indexes[1]] = "month_name"
+		kinds[indexes[2]] = "year"
+		return kinds, true
+
+	case isMonthNameToken(first) && second.Kind == "number" && isFourDigitYear(third):
+		kinds[indexes[0]] = "month_name"
+		kinds[indexes[1]] = "day"
+		kinds[indexes[2]] = "year"
+		return kinds, true
+	}
+
+	return nil, false
+}
+
+func rawTokenPart(token rawTimestampToken) timestampPart {
+	switch token.Kind {
+	case "fraction":
+		return timestampPart{Kind: "fraction", Value: token.Value}
+	case "timezone":
+		return timestampPart{Kind: "timezone", Value: token.Value}
 	default:
-		return "", false
+		return timestampPart{Kind: "literal", Value: token.Value}
 	}
 }
 
-func withTimestampSuffix(value string, format string) string {
-	if match := reTimestampFraction.FindString(value); match != "" {
-		if strings.HasPrefix(match, ",") {
-			format += ",%L"
-		} else {
-			format += ".%L"
+func isMonthNameToken(token rawTimestampToken) bool {
+	return token.Kind == "word" && len(token.Value) >= 3
+}
+
+func isFourDigitYear(token rawTimestampToken) bool {
+	return token.Kind == "number" && len(token.Value) == 4
+}
+
+func renderTimeFormat(parts []timestampPart) string {
+	var builder strings.Builder
+	lastWasSpace := false
+
+	for _, part := range parts {
+		if part.Kind == "literal" && isWhitespaceLiteral(part.Value) {
+			if !lastWasSpace {
+				builder.WriteString(" ")
+				lastWasSpace = true
+			}
+			continue
+		}
+
+		lastWasSpace = false
+
+		switch part.Kind {
+		case "year":
+			builder.WriteString("%Y")
+		case "month":
+			builder.WriteString("%m")
+		case "month_name":
+			builder.WriteString("%b")
+		case "day":
+			builder.WriteString("%d")
+		case "day_space":
+			builder.WriteString("%e")
+		case "hour":
+			builder.WriteString("%H")
+		case "minute":
+			builder.WriteString("%M")
+		case "second":
+			builder.WriteString("%S")
+		case "fraction":
+			if strings.HasPrefix(part.Value, ",") {
+				builder.WriteString(",%L")
+			} else {
+				builder.WriteString(".%L")
+			}
+		case "timezone":
+			builder.WriteString("%z")
+		default:
+			builder.WriteString(part.Value)
 		}
 	}
 
-	if reTimestampTimezone.MatchString(value) {
-		if reSpacedTimezone.MatchString(value) {
-			format += " %z"
-		} else {
-			format += "%z"
-		}
-	}
+	return builder.String()
+}
 
-	return format
+func isWhitespaceLiteral(value string) bool {
+	return value == " " || value == "\t"
 }

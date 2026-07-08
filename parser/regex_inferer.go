@@ -135,16 +135,16 @@ func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (stri
 			builder.WriteString("(?<")
 			builder.WriteString(match.Key)
 			builder.WriteString(">")
-			builder.WriteString(inferValuePattern(match.Key, match.Value, match.End == len(snippet)))
+			builder.WriteString(inferValuePatternForMatch(match, enableMultiline, isLastField))
 			builder.WriteString(")")
 		}
 
 		cursor = match.End
 
-		// For multiline logs, consume the final newline outside the capture group.
-		// This keeps message clean while still matching the full multiline record.
+		// For multiline logs, consume a trailing newline outside the capture group when it exists.
+		// Some merged records do not end with a newline, so keep it optional.
 		if enableMultiline && isLastField {
-			builder.WriteString(`\n`)
+			builder.WriteString(`\n?`)
 		}
 	}
 
@@ -291,6 +291,22 @@ func inferMessageRegex(value string) string {
 	return `[\s\S]*`
 }
 
+func inferValuePatternForMatch(match fieldMatch, enableMultiline bool, isLastField bool) string {
+	pattern := inferValuePattern(match.Key, match.Value, isLastField)
+	if !enableMultiline || !isLastField {
+		return pattern
+	}
+
+	switch pattern {
+	case `[\s\S]*`:
+		return `[\s\S]*?`
+	case `.*`:
+		return `.*?`
+	default:
+		return pattern
+	}
+}
+
 // inferValuePattern infers a regex pattern for one field value.
 //
 // This is intentionally opinionated and conservative.
@@ -326,7 +342,7 @@ func inferValuePattern(key string, value string, isLast bool) string {
 }
 
 func looksLikeTimestamp(value string) bool {
-	if _, ok := inferTimeFormatFromShape(value); ok {
+	if _, ok := inferTimestampParts(value); ok {
 		return true
 	}
 
@@ -345,8 +361,8 @@ func looksLikeTimestamp(value string) bool {
 }
 
 func inferTimestampRegex(value string) string {
-	if regex, ok := inferTimestampRegexFromShape(value); ok {
-		return regex
+	if parts, ok := inferTimestampParts(value); ok {
+		return renderTimestampRegex(parts)
 	}
 
 	tokens := Tokenize(value)
@@ -408,41 +424,42 @@ func looksLikeFloat(value string) bool {
 	return regexp.MustCompile(`^\d+\.\d+$`).MatchString(value)
 }
 
-func inferTimestampRegexFromShape(value string) (string, bool) {
-	value = strings.TrimSpace(value)
+func renderTimestampRegex(parts []timestampPart) string {
+	var builder strings.Builder
+	lastWasSpace := false
 
-	switch {
-	case reMonthNameDateTime.MatchString(value):
-		return withTimestampRegexSuffix(value, `\w+\s+\d+\s+\d{2}:\d{2}:\d{2}`), true
-
-	case reNumericDateTime.MatchString(value):
-		separator := `[-\/]`
-		if matches := reNumericDateTime.FindStringSubmatch(value); len(matches) > 1 {
-			separator = regexp.QuoteMeta(matches[1])
+	for _, part := range parts {
+		if part.Kind == "literal" && isWhitespaceLiteral(part.Value) {
+			if !lastWasSpace {
+				builder.WriteString(`\s+`)
+				lastWasSpace = true
+			}
+			continue
 		}
 
-		return withTimestampRegexSuffix(value, `\d+`+separator+`\d+\s+\d{2}:\d{2}:\d{2}`), true
+		lastWasSpace = false
 
-	case reTimeOnly.MatchString(value):
-		return withTimestampRegexSuffix(value, `\d{2}:\d{2}:\d{2}`), true
-
-	default:
-		return "", false
-	}
-}
-
-func withTimestampRegexSuffix(value string, regex string) string {
-	if match := reTimestampFraction.FindString(value); match != "" {
-		if strings.HasPrefix(match, ",") {
-			regex += `,\d+`
-		} else {
-			regex += `\.\d+`
+		switch part.Kind {
+		case "year":
+			builder.WriteString(`\d{4}`)
+		case "month", "day", "day_space":
+			builder.WriteString(`\d+`)
+		case "month_name":
+			builder.WriteString(`\w+`)
+		case "hour", "minute", "second":
+			builder.WriteString(`\d{2}`)
+		case "fraction":
+			if strings.HasPrefix(part.Value, ",") {
+				builder.WriteString(`,\d+`)
+			} else {
+				builder.WriteString(`\.\d+`)
+			}
+		case "timezone":
+			builder.WriteString(`(?:Z|z|[+-]\d{2}:?\d{2})`)
+		default:
+			builder.WriteString(regexp.QuoteMeta(part.Value))
 		}
 	}
 
-	if reTimestampTimezone.MatchString(value) {
-		regex += `\s*(?:Z|z|[+-]\d{2}:?\d{2})`
-	}
-
-	return regex
+	return builder.String()
 }
