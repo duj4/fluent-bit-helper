@@ -152,7 +152,11 @@ func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (stri
 	suffix := snippet[cursor:]
 	builder.WriteString(renderLiteral(suffix))
 
-	builder.WriteString("$")
+	if enableMultiline {
+		builder.WriteString(`\z`)
+	} else {
+		builder.WriteString("$")
+	}
 
 	return builder.String(), nil
 }
