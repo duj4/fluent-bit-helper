@@ -269,6 +269,34 @@ textarea {
     color: var(--text);
 }
 
+.format-switcher {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 4px 0 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.format-tabs,
+.format-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.format-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #020617;
+}
+
+:root[data-theme="light"] .format-tab.active {
+    color: #ffffff;
+}
+
 .multiline-block {
     margin-top: 2px;
     padding-top: 2px;

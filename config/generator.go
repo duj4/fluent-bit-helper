@@ -13,6 +13,8 @@ import (
 
 // Build converts user input into Fluent-Bit domain model.
 func Build(userInput UserInput) (FluentBitConfig, error) {
+	parserInputs := normalizeParserInputs(userInput)
+
 	cfg := FluentBitConfig{
 		Env: buildBaseEnv(userInput),
 
@@ -27,29 +29,31 @@ func Build(userInput UserInput) (FluentBitConfig, error) {
 
 	// build parser/filter if enabled
 	if userInput.EnableParser {
-		parserObj, err := parser.BuildParser(userInput.ParserInput)
-		if err != nil {
-			return FluentBitConfig{}, err
-		}
+		multilineEnabled := hasMultilineParser(parserInputs)
+		for _, parserInput := range parserInputs {
+			parserInputForParser := parserInput
+			if multilineEnabled {
+				parserInputForParser.EnableMultiline = true
+			}
 
-		cfg.Parsers = []parser.Parser{
-			parserObj,
-		}
-
-		filterObj := parser.BuildFilter(userInput.ParserInput)
-		cfg.Pipeline.Filters = []interface{}{
-			filterObj,
-		}
-
-		if userInput.ParserInput.EnableMultiline {
-			multilineParserObj, err := parser.BuildMultilineParser(userInput.ParserInput)
+			parserObj, err := parser.BuildParser(parserInputForParser)
 			if err != nil {
 				return FluentBitConfig{}, err
 			}
 
-			cfg.MultilineParsers = []parser.MultilineParser{
-				multilineParserObj,
+			cfg.Parsers = append(cfg.Parsers, parserObj)
+
+			filterObj := parser.BuildFilter(parserInput)
+			cfg.Pipeline.Filters = append(cfg.Pipeline.Filters, filterObj)
+		}
+
+		if multilineEnabled {
+			multilineParserObj, err := parser.BuildCombinedMultilineParser(parserInputs)
+			if err != nil {
+				return FluentBitConfig{}, err
 			}
+
+			cfg.MultilineParsers = []parser.MultilineParser{multilineParserObj}
 		}
 	}
 
@@ -69,6 +73,41 @@ func Build(userInput UserInput) (FluentBitConfig, error) {
 	}
 
 	return cfg, nil
+}
+
+func normalizeParserInputs(userInput UserInput) []parser.ParserInput {
+	if !userInput.EnableParser {
+		return nil
+	}
+
+	if len(userInput.ParserInputs) > 0 {
+		var inputs []parser.ParserInput
+		for _, parserInput := range userInput.ParserInputs {
+			if strings.TrimSpace(parserInput.ParserName) == "" &&
+				strings.TrimSpace(parserInput.TimeKey) == "" &&
+				strings.TrimSpace(parserInput.TimeValue) == "" {
+				continue
+			}
+
+			inputs = append(inputs, parserInput)
+		}
+
+		if len(inputs) > 0 {
+			return inputs
+		}
+	}
+
+	return []parser.ParserInput{userInput.ParserInput}
+}
+
+func hasMultilineParser(parserInputs []parser.ParserInput) bool {
+	for _, parserInput := range parserInputs {
+		if parserInput.EnableMultiline {
+			return true
+		}
+	}
+
+	return false
 }
 
 func buildBaseEnv(userInput UserInput) Env {
@@ -145,11 +184,16 @@ func buildTailInput(userInput UserInput) TailInput {
 		tailInput.ReadFromHead = "on"
 	}
 
-	if userInput.EnableParser && userInput.ParserInput.EnableMultiline {
-		tailInput.MultilineParser = userInput.ParserInput.MultilineParserName
+	parserInputs := normalizeParserInputs(userInput)
+	if hasMultilineParser(parserInputs) {
+		tailInput.MultilineParser = multilineParserName(parserInputs)
 	}
 
 	return tailInput
+}
+
+func multilineParserName(parserInputs []parser.ParserInput) string {
+	return parser.CombinedMultilineParserName(parserInputs)
 }
 
 func buildStdoutOutput() StdoutOutput {

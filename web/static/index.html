@@ -106,6 +106,14 @@
                 </div>
 
                 <div id="parserBlock" class="hidden">
+                    <div id="parserFormatsBlock" class="format-switcher">
+                        <div id="parserFormats" class="format-tabs"></div>
+                        <div class="format-actions">
+                            <button id="addParserFormatBtn" class="secondary" type="button">Add format</button>
+                            <button id="removeParserFormatBtn" class="secondary" type="button">Remove</button>
+                        </div>
+                    </div>
+
                     <div class="grid two">
                         <label>
                             Log content format
@@ -182,8 +190,9 @@
 
                         <div id="multilineNameBlock" class="hidden">
                             <label>
-                                Multiline parser name
+                                Shared multiline parser name
                                 <input id="multilineParserName" placeholder="multi_app" />
+                                <small>One tail input can use only one multiline parser, so all log formats share this name.</small>
                             </label>
                         </div>
                     </div>

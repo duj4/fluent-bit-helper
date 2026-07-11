@@ -4,4 +4,4 @@ fluent-bit-helper
 data/
 test*.json
 test*.log
-vendor/
+# vendor/

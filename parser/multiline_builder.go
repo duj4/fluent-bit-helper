@@ -37,6 +37,78 @@ func BuildMultilineParser(input ParserInput) (MultilineParser, error) {
 	}, nil
 }
 
+// BuildCombinedMultilineParser builds one multiline parser whose start rule accepts all parser inputs.
+func BuildCombinedMultilineParser(inputs []ParserInput) (MultilineParser, error) {
+	name := combinedMultilineParserName(inputs)
+	if strings.TrimSpace(name) == "" {
+		return MultilineParser{}, fmt.Errorf("multiline parser name is empty")
+	}
+
+	var startRegexes []string
+	for _, input := range inputs {
+		startRegex, err := InferMultilineStartRegex(input.Snippet, input.TimeValue)
+		if err != nil {
+			return MultilineParser{}, err
+		}
+
+		startRegexes = append(startRegexes, strings.TrimPrefix(startRegex, "^"))
+	}
+
+	if len(startRegexes) == 0 {
+		return MultilineParser{}, fmt.Errorf("no multiline start regexes generated")
+	}
+
+	startRegex := "^(?:" + strings.Join(startRegexes, "|") + ")"
+	contRegex := buildMultilineContRegex(startRegex)
+
+	return MultilineParser{
+		Name:         name,
+		Type:         "regex",
+		FlushTimeout: 1000,
+		Rules: []MultilineRule{
+			{
+				State:     "start_state",
+				Regex:     wrapFluentBitRegex(startRegex),
+				NextState: "cont",
+			},
+			{
+				State:     "cont",
+				Regex:     wrapFluentBitRegex(contRegex),
+				NextState: "cont",
+			},
+		},
+	}, nil
+}
+
+func combinedMultilineParserName(inputs []ParserInput) string {
+	return CombinedMultilineParserName(inputs)
+}
+
+// CombinedMultilineParserName returns the shared multiline parser name used for combined inputs.
+func CombinedMultilineParserName(inputs []ParserInput) string {
+	for _, input := range inputs {
+		if input.EnableMultiline && strings.TrimSpace(input.MultilineParserName) != "" {
+			return normalizeCombinedMultilineParserName(input.MultilineParserName)
+		}
+	}
+
+	return ""
+}
+
+func normalizeCombinedMultilineParserName(name string) string {
+	name = strings.TrimSpace(name)
+	if len(name) <= 1 {
+		return name
+	}
+
+	trimmed := strings.TrimRight(name, "0123456789")
+	if trimmed == "" || trimmed == name {
+		return name
+	}
+
+	return strings.TrimRight(trimmed, "_-")
+}
+
 // InferMultilineStartRegex builds multiline start regex from timestamp position.
 //
 // It assumes a new log event starts with the timestamp pattern.

@@ -19,6 +19,7 @@ type UserInput struct {
 	// parser
 	EnableParser bool
 	ParserInput  parser.ParserInput
+	ParserInputs []parser.ParserInput
 
 	// loki
 	LokiHost               string

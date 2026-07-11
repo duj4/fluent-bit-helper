@@ -24,6 +24,7 @@ const state = {
         Match: "",
         KeyName: "log"
     },
+    ParserInputs: [],
 
     LokiHost: "",
     TenantID: "",
@@ -63,6 +64,10 @@ const els = {
 
     enableParser: $("enableParser"),
     parserBlock: $("parserBlock"),
+    parserFormatsBlock: $("parserFormatsBlock"),
+    parserFormats: $("parserFormats"),
+    addParserFormatBtn: $("addParserFormatBtn"),
+    removeParserFormatBtn: $("removeParserFormatBtn"),
     parserFormat: $("parserFormat"),
     timezone: $("timezone"),
     jsonParserBlock: $("jsonParserBlock"),
@@ -122,6 +127,7 @@ let activeView = "generate";
 let debounceTimer = null;
 let doctorDebounceTimer = null;
 let doctorRequestSeq = 0;
+let activeParserInputIndex = 0;
 
 function setVisible(el, visible) {
     if (!el) {
@@ -142,6 +148,117 @@ function normalizeLokiInstance(value) {
     return value.trim().replace(/^https?:\/\/(.+)$/i, "$1");
 }
 
+function defaultParserInput(index = 0) {
+    return {
+        Format: "json",
+        TimeKey: "",
+        TimeValue: "",
+        Timezone: "GMT",
+        ParserName: "",
+        Snippet: "",
+        RegexFields: [],
+        EnableMultiline: false,
+        MultilineParserName: "",
+        Match: "",
+        KeyName: "log"
+    };
+}
+
+function cloneParserInput(parserInput) {
+    return structuredClone(parserInput || defaultParserInput());
+}
+
+function ensureParserInputs() {
+    if (!state.ParserInputs || state.ParserInputs.length === 0) {
+        state.ParserInputs = [cloneParserInput(state.ParserInput)];
+    }
+
+    if (activeParserInputIndex >= state.ParserInputs.length) {
+        activeParserInputIndex = state.ParserInputs.length - 1;
+    }
+
+    state.ParserInput = state.ParserInputs[activeParserInputIndex];
+}
+
+function sharedMultilineParserName() {
+    ensureParserInputs();
+
+    const input = state.ParserInputs.find((parserInput) => parserInput.MultilineParserName && parserInput.MultilineParserName.trim());
+    return input ? input.MultilineParserName.trim() : "";
+}
+
+function syncActiveParserInputFromDOM() {
+    ensureParserInputs();
+
+    const parserInput = state.ParserInputs[activeParserInputIndex];
+    const sharedMultilineParserName = els.multilineParserName.value.trim();
+    parserInput.Format = els.parserFormat.value;
+    parserInput.Timezone = els.timezone.value;
+    parserInput.ParserName = els.parserName.value.trim();
+    parserInput.Match = state.Tag;
+    parserInput.KeyName = els.keyName.value.trim() || "log";
+
+    if (parserInput.Format === "json") {
+        parserInput.TimeKey = els.jsonTimeKey.value.trim();
+        parserInput.TimeValue = els.jsonTimeValue.value.trim();
+        parserInput.Snippet = "";
+        parserInput.RegexFields = [];
+        parserInput.EnableMultiline = false;
+        parserInput.MultilineParserName = "";
+    } else {
+        parserInput.Snippet = els.snippet.value;
+        parserInput.RegexFields = collectRegexFields();
+
+        const selectedTimeField = els.regexTimeField.value;
+        const timeField = parserInput.RegexFields.find((f) => f.Key === selectedTimeField);
+
+        parserInput.TimeKey = timeField ? timeField.Key : "";
+        parserInput.TimeValue = timeField ? timeField.Value : "";
+        parserInput.EnableMultiline = els.enableMultiline.checked;
+        parserInput.MultilineParserName = sharedMultilineParserName;
+    }
+
+    state.ParserInputs.forEach((item) => {
+        if (item.Format === "regex" && sharedMultilineParserName) {
+            item.MultilineParserName = sharedMultilineParserName;
+        }
+    });
+
+    if (parserInput.EnableMultiline && sharedMultilineParserName) {
+        state.ParserInputs.forEach((item) => {
+            if (item.Format === "regex") {
+                item.EnableMultiline = true;
+            }
+        });
+    }
+
+    state.ParserInput = parserInput;
+}
+
+function loadActiveParserInputIntoDOM() {
+    ensureParserInputs();
+
+    const parserInput = state.ParserInputs[activeParserInputIndex];
+    state.ParserInput = parserInput;
+
+    els.parserFormat.value = parserInput.Format || "json";
+    els.timezone.value = parserInput.Timezone || "GMT";
+    els.parserName.value = parserInput.ParserName || "";
+    els.keyName.value = parserInput.KeyName || "log";
+    els.jsonTimeKey.value = parserInput.TimeKey || "";
+    els.jsonTimeValue.value = parserInput.TimeValue || "";
+    els.snippet.value = parserInput.Snippet || "";
+    els.enableMultiline.checked = Boolean(parserInput.EnableMultiline);
+    els.multilineParserName.value = sharedMultilineParserName() || parserInput.MultilineParserName || "";
+
+    renderRegexFields();
+    if (parserInput.TimeKey) {
+        els.regexTimeField.value = parserInput.TimeKey;
+    }
+    renderParserFormats();
+    renderVisibility();
+}
+
 function syncStateFromDOM() {
     const isQuickTest = els.mode.value === "quick-test";
 
@@ -159,31 +276,7 @@ function syncStateFromDOM() {
 
     state.EnableParser = els.enableParser.checked;
 
-    state.ParserInput.Format = els.parserFormat.value;
-    state.ParserInput.Timezone = els.timezone.value;
-    state.ParserInput.ParserName = els.parserName.value.trim();
-    state.ParserInput.Match = state.Tag;
-    state.ParserInput.KeyName = els.keyName.value.trim() || "log";
-
-    if (state.ParserInput.Format === "json") {
-        state.ParserInput.TimeKey = els.jsonTimeKey.value.trim();
-        state.ParserInput.TimeValue = els.jsonTimeValue.value.trim();
-        state.ParserInput.Snippet = "";
-        state.ParserInput.RegexFields = [];
-        state.ParserInput.EnableMultiline = false;
-        state.ParserInput.MultilineParserName = "";
-    } else {
-        state.ParserInput.Snippet = els.snippet.value;
-        state.ParserInput.RegexFields = collectRegexFields();
-
-        const selectedTimeField = els.regexTimeField.value;
-        const timeField = state.ParserInput.RegexFields.find((f) => f.Key === selectedTimeField);
-
-        state.ParserInput.TimeKey = timeField ? timeField.Key : "";
-        state.ParserInput.TimeValue = timeField ? timeField.Value : "";
-        state.ParserInput.EnableMultiline = els.enableMultiline.checked;
-        state.ParserInput.MultilineParserName = els.multilineParserName.value.trim();
-    }
+    syncActiveParserInputFromDOM();
 
     state.LokiHost = normalizeLokiInstance(els.lokiHost.value);
     if (els.lokiHost.value !== state.LokiHost) {
@@ -205,6 +298,8 @@ function buildGeneratePayload() {
 
     const payload = structuredClone(state);
     const frontendWarnings = [];
+    payload.ParserInputs = normalizePayloadParserInputs(payload);
+    payload.ParserInput = payload.ParserInputs[0] || payload.ParserInput;
 
     if (payload.EnableParser && !isParserReady(payload)) {
         payload.EnableParser = false;
@@ -222,6 +317,7 @@ function buildGeneratePayload() {
             Match: "",
             KeyName: "log"
         };
+        payload.ParserInputs = [];
 
         payload.LokiLabels = [];
         payload.LokiStructuredMetadata = [];
@@ -232,12 +328,14 @@ function buildGeneratePayload() {
 
     if (
         payload.EnableParser &&
-        payload.ParserInput.Format === "regex" &&
-        payload.ParserInput.EnableMultiline &&
-        !payload.ParserInput.MultilineParserName.trim()
+        payload.ParserInputs.some((parserInput) => parserInput.Format === "regex" && parserInput.EnableMultiline) &&
+        !payload.ParserInputs.some((parserInput) => parserInput.EnableMultiline && parserInput.MultilineParserName.trim())
     ) {
-        payload.ParserInput.EnableMultiline = false;
-        payload.ParserInput.MultilineParserName = "";
+        payload.ParserInputs.forEach((parserInput) => {
+            parserInput.EnableMultiline = false;
+            parserInput.MultilineParserName = "";
+        });
+        payload.ParserInput = payload.ParserInputs[0] || payload.ParserInput;
 
         frontendWarnings.push("Parser: multiline is enabled but parser name is empty; YAML preview is generated without multiline parser section");
     }
@@ -253,6 +351,24 @@ function buildGeneratePayload() {
     return { payload, frontendWarnings };
 }
 
+function normalizePayloadParserInputs(payload) {
+    if (!payload.EnableParser) {
+        return [];
+    }
+
+    const inputs = (payload.ParserInputs && payload.ParserInputs.length > 0)
+        ? payload.ParserInputs
+        : [payload.ParserInput];
+
+    return inputs
+        .map((parserInput) => ({
+            ...parserInput,
+            Match: payload.Tag,
+            KeyName: parserInput.KeyName && parserInput.KeyName.trim() ? parserInput.KeyName.trim() : "log"
+        }))
+        .filter((parserInput) => parserInput.ParserName.trim() || parserInput.TimeKey.trim() || parserInput.TimeValue.trim());
+}
+
 
 function normalizeLokiLineFormat(value) {
     if (value === "key_value") {
@@ -263,12 +379,19 @@ function normalizeLokiLineFormat(value) {
 }
 
 function isParserReady(payload) {
-    const parserInput = payload.ParserInput;
-
     if (!payload.EnableParser) {
         return true;
     }
 
+    const parserInputs = normalizePayloadParserInputs(payload);
+    if (parserInputs.length === 0) {
+        return false;
+    }
+
+    return parserInputs.every(isSingleParserReady);
+}
+
+function isSingleParserReady(parserInput) {
     if (!parserInput.ParserName.trim()) {
         return false;
     }
@@ -309,22 +432,26 @@ function isParserReady(payload) {
 }
 
 function isAdditionalLokiLabelsEnabled() {
+    ensureParserInputs();
+
     return Boolean(
         els.enableLokiLabels &&
         els.enableLokiLabels.checked &&
         els.output.value === "loki" &&
         els.enableParser.checked &&
-        els.parserFormat.value === "regex"
+        state.ParserInputs.some((parserInput) => parserInput.Format === "regex")
     );
 }
 
 function isStructuredMetadataEnabled() {
+    ensureParserInputs();
+
     return Boolean(
         els.enableStructuredMetadata &&
         els.enableStructuredMetadata.checked &&
         els.output.value === "loki" &&
         els.enableParser.checked &&
-        els.parserFormat.value === "regex"
+        state.ParserInputs.some((parserInput) => parserInput.Format === "regex")
     );
 }
 
@@ -380,6 +507,70 @@ function collectRegexFields() {
             Pattern: row.querySelector(".regex-pattern")?.value.trim() || ""
         }))
         .filter((f) => f.Key !== "" || f.Value !== "" || f.Pattern !== "");
+}
+
+function renderParserFormats() {
+    ensureParserInputs();
+
+    if (!els.parserFormats) {
+        return;
+    }
+
+    els.parserFormats.innerHTML = "";
+
+    state.ParserInputs.forEach((parserInput, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `secondary format-tab${index === activeParserInputIndex ? " active" : ""}`;
+        button.textContent = parserInput.ParserName || `Format ${index + 1}`;
+
+        button.addEventListener("click", () => {
+            if (index === activeParserInputIndex) {
+                return;
+            }
+
+            syncStateFromDOM();
+            activeParserInputIndex = index;
+            loadActiveParserInputIntoDOM();
+            renderLokiLabels();
+            renderStructuredMetadata();
+            scheduleGenerate();
+        });
+
+        els.parserFormats.appendChild(button);
+    });
+
+    if (els.removeParserFormatBtn) {
+        els.removeParserFormatBtn.disabled = state.ParserInputs.length <= 1;
+    }
+}
+
+function addParserFormat() {
+    syncStateFromDOM();
+    const parserInput = defaultParserInput(state.ParserInputs.length);
+    parserInput.MultilineParserName = sharedMultilineParserName();
+    parserInput.EnableMultiline = state.ParserInputs.some((item) => item.EnableMultiline);
+    state.ParserInputs.push(parserInput);
+    activeParserInputIndex = state.ParserInputs.length - 1;
+    loadActiveParserInputIntoDOM();
+    renderLokiLabels();
+    renderStructuredMetadata();
+    scheduleGenerate();
+}
+
+function removeParserFormat() {
+    ensureParserInputs();
+
+    if (state.ParserInputs.length <= 1) {
+        return;
+    }
+
+    state.ParserInputs.splice(activeParserInputIndex, 1);
+    activeParserInputIndex = Math.max(0, activeParserInputIndex - 1);
+    loadActiveParserInputIntoDOM();
+    renderLokiLabels();
+    renderStructuredMetadata();
+    scheduleGenerate();
 }
 
 function renderRegexFields() {
@@ -838,9 +1029,26 @@ function findDuplicatedLokiNames(labels, metadata) {
 }
 
 function getParserFieldNames() {
-    return collectRegexFields()
-        .map((field) => field.Key.trim())
-        .filter(Boolean);
+    ensureParserInputs();
+
+    const names = [];
+    const seen = new Set();
+
+    state.ParserInputs.forEach((parserInput, index) => {
+        const fields = index === activeParserInputIndex ? collectRegexFields() : (parserInput.RegexFields || []);
+
+        fields.forEach((field) => {
+            const name = field.Key.trim();
+            if (!name || seen.has(name)) {
+                return;
+            }
+
+            names.push(name);
+            seen.add(name);
+        });
+    });
+
+    return names;
 }
 
 function getUsedLokiFieldsFromState() {
@@ -1494,12 +1702,14 @@ function bindEvents() {
         el.addEventListener("input", () => {
             syncStateFromDOM();
             renderVisibility();
+            renderParserFormats();
             scheduleGenerate();
         });
 
         el.addEventListener("change", () => {
             syncStateFromDOM();
             renderVisibility();
+            renderParserFormats();
             scheduleGenerate();
         });
     });
@@ -1514,6 +1724,8 @@ function bindEvents() {
     }
 
     els.addRegexFieldBtn.addEventListener("click", addRegexField);
+    els.addParserFormatBtn.addEventListener("click", addParserFormat);
+    els.removeParserFormatBtn.addEventListener("click", removeParserFormat);
     els.addLokiLabelBtn.addEventListener("click", addLokiLabel);
     els.addStructuredMetadataBtn.addEventListener("click", addStructuredMetadata);
     els.copyYamlBtn.addEventListener("click", copyYAML);
@@ -1531,6 +1743,8 @@ function initDefaults() {
     els.output.value = "stdout";
     els.timezone.value = "GMT";
     els.parserFormat.value = "json";
+    state.ParserInputs = [cloneParserInput(state.ParserInput)];
+    activeParserInputIndex = 0;
 
     if (els.enableLokiLabels) {
         els.enableLokiLabels.checked = false;
@@ -1545,6 +1759,7 @@ function initDefaults() {
     }
 
     renderVisibility();
+    renderParserFormats();
     renderRegexFields();
     renderLokiLabels();
     renderStructuredMetadata();
