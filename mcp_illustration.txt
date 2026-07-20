@@ -1,0 +1,27 @@
+Why the Second Hop Uses Header Authentication
+
+The second segment, from cmdb-api-server to JSM, does not continue using Kerberos because the existing Kerberos identity of cmdb-api-server is the shared system account itsm_api_qa. If that authentication method were reused for MCP requests, Kantega and JSM would only see itsm_api_qa as the authenticated user, rather than the original AI-agent identity or its mapped human user.
+
+Passing the dujas_ai identity through Kerberos across the second hop would require Kerberos delegation, or separate outbound Kerberos credentials for every AI-agent account. Both approaches would introduce significant identity-management, credential-distribution, and security complexity. Continuing to authenticate as itsm_api_qa while also supplying a mapped user in an HTTP header would additionally present two competing identities in the same request.
+
+The proposed design therefore terminates the AI-agent Kerberos authentication at cmdb-api-server. After validating dujas_ai and mapping it to dujas, cmdb-api-server sends the effective human identity to JSM through a trusted HTTP header. Kantega Header Authentication then establishes the JSM authentication context as dujas, allowing the request to use that user’s existing JSM permissions.
+
+Why a Dedicated L7 F5 VIP Is Required
+
+Using Header Authentication introduces a strict security requirement: JSM must only trust identity headers that arrive through a controlled and authenticated gateway path. The existing JSM VIP operates at Layer 4, so it cannot terminate TLS, inspect or sanitize HTTP headers, validate the cmdb-api-server client certificate, or distinguish AI traffic from normal browser and integration traffic.
+
+A dedicated Layer 7 F5 VIP is therefore required in front of JSM for the MCP route. It authenticates cmdb-api-server through mTLS, removes potentially forged identity headers, allows only approved headers and API operations, and applies a dedicated SNAT address. Kantega Header Authentication can then be restricted to requests arriving from that dedicated SNAT address.
+
+
+This creates a trusted chain:
+Kerberos-authenticated AI agent
+        ↓
+cmdb-api-server validates and maps the identity
+        ↓
+mTLS-authenticated L7 F5 route
+        ↓
+trusted effective-user header
+        ↓
+Kantega Header Authentication
+        ↓
+JSM authorization as the mapped human user
