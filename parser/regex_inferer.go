@@ -129,6 +129,20 @@ func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (stri
 				return "", err
 			}
 
+			// Access logs commonly replace an optional quoted value with an unquoted dash.
+			if isDoubleQuotedField(snippet, match) {
+				builder.WriteString("(?:")
+				builder.WriteString(renderLiteral(prefix[:len(prefix)-1]))
+				builder.WriteString(`(?:"(?<`)
+				builder.WriteString(match.Key)
+				builder.WriteString(">")
+				builder.WriteString(pattern)
+				builder.WriteString(`)"|-)`)
+				builder.WriteString(")?")
+				cursor = match.End + 1
+				continue
+			}
+
 			// Keep the separator before an optional field inside the optional group.
 			//
 			// Example:
@@ -201,6 +215,13 @@ func findValueOccurrences(snippet string, value string) []int {
 	}
 
 	return starts
+}
+
+func isDoubleQuotedField(snippet string, match fieldMatch) bool {
+	return match.Start > 0 &&
+		match.End < len(snippet) &&
+		snippet[match.Start-1] == '"' &&
+		snippet[match.End] == '"'
 }
 
 func resolveOrderedFieldMatches(candidates [][]fieldMatch) ([]fieldMatch, bool) {
