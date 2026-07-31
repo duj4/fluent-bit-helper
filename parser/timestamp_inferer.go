@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -198,16 +199,44 @@ func shouldTreatAsTimezone(tokens []rawTimestampToken) bool {
 
 func findTimeStart(tokens []rawTimestampToken) int {
 	for i := 0; i+4 < len(tokens); i++ {
-		if tokens[i].Kind == "number" &&
-			tokens[i+1].Value == ":" &&
-			tokens[i+2].Kind == "number" &&
-			tokens[i+3].Value == ":" &&
-			tokens[i+4].Kind == "number" {
+		if !isValidTimeCandidate(tokens[i : i+5]) {
+			continue
+		}
+
+		if _, ok := inferDatePartKinds(tokens[:i]); ok {
 			return i
 		}
 	}
 
 	return -1
+}
+
+func isValidTimeCandidate(tokens []rawTimestampToken) bool {
+	if len(tokens) != 5 ||
+		tokens[0].Kind != "number" ||
+		tokens[1].Value != ":" ||
+		tokens[2].Kind != "number" ||
+		tokens[3].Value != ":" ||
+		tokens[4].Kind != "number" {
+		return false
+	}
+
+	return timestampNumberInRange(tokens[0].Value, 0, 23) &&
+		timestampNumberInRange(tokens[2].Value, 0, 59) &&
+		timestampNumberInRange(tokens[4].Value, 0, 59)
+}
+
+func timestampNumberInRange(value string, min int, max int) bool {
+	if len(value) == 0 || len(value) > 2 {
+		return false
+	}
+
+	number, err := strconv.Atoi(value)
+	if err != nil || number < min || number > max {
+		return false
+	}
+
+	return true
 }
 
 func inferDateOnlyParts(tokens []rawTimestampToken) ([]timestampPart, bool) {

@@ -45,7 +45,10 @@ func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (stri
 		return "", errors.New("no regex fields provided")
 	}
 
-	matches := make([]fieldMatch, 0, len(fields))
+	candidates := make([][]fieldMatch, 0, len(fields))
+	hasAmbiguousValue := false
+	var ambiguousKey string
+	var ambiguousValue string
 
 	for _, field := range fields {
 		key := strings.TrimSpace(field.Key)
@@ -59,24 +62,46 @@ func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (stri
 			return "", fmt.Errorf("field %q has empty value", key)
 		}
 
-		start := strings.Index(snippet, value)
-		if start < 0 {
+		starts := findValueOccurrences(snippet, value)
+		if len(starts) == 0 {
 			return "", fmt.Errorf("value for field %q not found in snippet: %q", key, value)
 		}
 
-		// Detect ambiguous value.
-		if strings.Count(snippet, value) > 1 {
-			return "", fmt.Errorf("value for field %q appears multiple times in snippet: %q", key, value)
+		if len(starts) > 1 && !hasAmbiguousValue {
+			hasAmbiguousValue = true
+			ambiguousKey = key
+			ambiguousValue = value
 		}
 
-		matches = append(matches, fieldMatch{
-			Key:      sanitizeGroupName(key),
-			Value:    value,
-			Optional: field.Optional,
-			Pattern:  strings.TrimSpace(field.Pattern),
-			Start:    start,
-			End:      start + len(value),
-		})
+		fieldCandidates := make([]fieldMatch, 0, len(starts))
+		for _, start := range starts {
+			fieldCandidates = append(fieldCandidates, fieldMatch{
+				Key:      sanitizeGroupName(key),
+				Value:    value,
+				Optional: field.Optional,
+				Pattern:  strings.TrimSpace(field.Pattern),
+				Start:    start,
+				End:      start + len(value),
+			})
+		}
+		candidates = append(candidates, fieldCandidates)
+	}
+
+	matches := make([]fieldMatch, 0, len(fields))
+	if hasAmbiguousValue {
+		var ok bool
+		matches, ok = resolveOrderedFieldMatches(candidates)
+		if !ok {
+			return "", fmt.Errorf(
+				"value for field %q appears multiple times in snippet: %q",
+				ambiguousKey,
+				ambiguousValue,
+			)
+		}
+	} else {
+		for _, fieldCandidates := range candidates {
+			matches = append(matches, fieldCandidates[0])
+		}
 	}
 
 	sort.Slice(matches, func(i, j int) bool {
@@ -159,6 +184,66 @@ func InferRegex(snippet string, fields []RegexField, enableMultiline bool) (stri
 	}
 
 	return builder.String(), nil
+}
+
+func findValueOccurrences(snippet string, value string) []int {
+	var starts []int
+
+	for offset := 0; offset <= len(snippet)-len(value); {
+		index := strings.Index(snippet[offset:], value)
+		if index < 0 {
+			break
+		}
+
+		start := offset + index
+		starts = append(starts, start)
+		offset = start + len(value)
+	}
+
+	return starts
+}
+
+func resolveOrderedFieldMatches(candidates [][]fieldMatch) ([]fieldMatch, bool) {
+	lastUniqueEnd := -1
+	for _, fieldCandidates := range candidates {
+		if len(fieldCandidates) != 1 {
+			continue
+		}
+
+		if fieldCandidates[0].Start < lastUniqueEnd {
+			return nil, false
+		}
+		lastUniqueEnd = fieldCandidates[0].End
+	}
+
+	var solution []fieldMatch
+	solutionCount := 0
+	current := make([]fieldMatch, 0, len(candidates))
+
+	var search func(index int, previousEnd int)
+	search = func(index int, previousEnd int) {
+		if solutionCount > 1 {
+			return
+		}
+		if index == len(candidates) {
+			solution = append([]fieldMatch(nil), current...)
+			solutionCount++
+			return
+		}
+
+		for _, candidate := range candidates[index] {
+			if candidate.Start < previousEnd {
+				continue
+			}
+
+			current = append(current, candidate)
+			search(index+1, candidate.End)
+			current = current[:len(current)-1]
+		}
+	}
+
+	search(0, 0)
+	return solution, solutionCount == 1
 }
 
 func validateNoOverlap(matches []fieldMatch) error {
