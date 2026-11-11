@@ -95,7 +95,7 @@ body.resizing {
     gap: 8px;
 }
 
-.action-group + .action-group {
+.action-group+.action-group {
     padding-left: 18px;
     border-left: 1px solid var(--border);
 }
@@ -577,7 +577,7 @@ pre {
         gap: 10px;
     }
 
-    .action-group + .action-group {
+    .action-group+.action-group {
         padding-left: 0;
         border-left: 0;
     }
@@ -596,6 +596,7 @@ pre {
     }
 
 }
+
 .doctor-form {
     display: flex;
     flex-direction: column;
@@ -796,6 +797,7 @@ pre {
 }
 
 @media (max-width: 1080px) {
+
     .regex-field-main,
     .regex-field-extra {
         grid-template-columns: 1fr;
