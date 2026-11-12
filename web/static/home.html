@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+ <title>Tools · Fluent Bit Helper</title>
+ <script src="/static/common.js"></script>
+ <link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/common.css">
+</head>
+<body>
+ <nav class="site-nav" aria-label="Main navigation">
+  <a class="site-brand" href="/">Fluent Bit Helper</a>
+  <a href="/" aria-current="page">Home</a><a href="/fluent-bit-helper">Fluent Bit Helper</a><a href="/metrics-analyzer">Metrics Analyzer</a>
+ </nav>
+ <main class="site-page">
+  <header class="page-heading">
+   <div><span class="eyebrow">Logs &amp; metrics / practical tools</span><h1>A clearer path from configuration to upgrade.</h1><p>Generate and check Fluent Bit YAML, or find the Windows Exporter changes that affect your Grafana queries. Choose a tool to get started.</p></div>
+   <button id="themeToggleBtn" class="secondary" type="button">Light mode</button>
+  </header>
+  <div class="tool-grid">
+   <a href="/fluent-bit-helper" class="card tool-card">
+    <span class="eyebrow">01 / Log configuration</span><h2>Fluent Bit Helper</h2>
+    <p>Build a configuration for your log pipeline, or check existing YAML against a selected baseline.</p>
+    <ul><li>Generate Fluent Bit YAML</li><li>Diagnose existing YAML</li><li>Copy or download the result</li></ul>
+    <span class="card-link">Open Fluent Bit Helper →</span>
+   </a>
+   <a href="/metrics-analyzer" class="card tool-card">
+    <span class="eyebrow">02 / Upgrade impact</span><h2>Metrics Analyzer</h2>
+    <p>See which dashboard panels and alert queries need attention before upgrading Windows Exporter.</p>
+    <ul><li>windows_exporter 0.31.x → 0.32.1</li><li>Grafana Dashboard and Alert Rule JSON</li><li>Read-only findings and migration advice</li></ul>
+    <span class="card-link">Open Metrics Analyzer →</span>
+   </a>
+  </div>
+  <p class="home-footer">No Grafana connection or API token is needed for upgrade analysis.</p>
+ </main>
+</body>
+</html>

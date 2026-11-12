@@ -1629,20 +1629,6 @@ function formatDownloadTimestamp(date) {
     return `${year}${month}${day}${hour}${minute}${second}`;
 }
 
-function applyTheme(theme) {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("flbctl.theme", theme);
-
-    if (els.themeToggleBtn) {
-        els.themeToggleBtn.textContent = theme === "dark" ? "Light mode" : "Dark mode";
-    }
-}
-
-function toggleTheme() {
-    const current = document.documentElement.getAttribute("data-theme") || "dark";
-    applyTheme(current === "dark" ? "light" : "dark");
-}
-
 function bindResizablePanels() {
     if (!els.layout || !els.resizeHandle) {
         return;
@@ -1730,15 +1716,11 @@ function bindEvents() {
     els.addStructuredMetadataBtn.addEventListener("click", addStructuredMetadata);
     els.copyYamlBtn.addEventListener("click", copyYAML);
     els.downloadYamlBtn.addEventListener("click", downloadYAML);
-    els.themeToggleBtn.addEventListener("click", toggleTheme);
 
     bindResizablePanels();
 }
 
 function initDefaults() {
-    const savedTheme = localStorage.getItem("flbctl.theme") || "dark";
-    applyTheme(savedTheme);
-
     els.mode.value = "quick-test";
     els.output.value = "stdout";
     els.timezone.value = "GMT";

@@ -1,0 +1,3245 @@
+{
+  "source": "0.31.x",
+  "target": "0.32.1",
+  "reference": "https://github.com/prometheus-community/windows_exporter/blob/v0.32.1/docs/upgrade/0.32.md",
+  "rules": [
+    {
+      "metric": "windows_cpu_core_frequency_mhz",
+      "new_metric": "windows_cpu_core_frequency_hertz",
+      "unit_change": {
+        "from": "megahertz",
+        "to": "hertz",
+        "factor": 1000000
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_cpu_info_l2_cache_size",
+      "new_metric": "windows_cpu_info_l2_cache_size_bytes",
+      "unit_change": {
+        "from": "kilobytes",
+        "to": "bytes",
+        "factor": 1024
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_cpu_info_l3_cache_size",
+      "new_metric": "windows_cpu_info_l3_cache_size_bytes",
+      "unit_change": {
+        "from": "kilobytes",
+        "to": "bytes",
+        "factor": 1024
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_exchange_http_proxy_avg_auth_latency",
+      "new_metric": "windows_exchange_http_proxy_avg_auth_latency_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_exchange_http_proxy_mailbox_proxy_failure_rate",
+      "new_metric": "windows_exchange_http_proxy_mailbox_proxy_failure_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_exchange_ldap_long_running_ops_per_sec",
+      "new_metric": "windows_exchange_ldap_long_running_operations_per_second",
+      "unit_change": {
+        "from": "mis_scaled_operations_per_second",
+        "to": "operations_per_second",
+        "factor": 0.0002777777777777778
+      },
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_exchange_ldap_long_running_ops_per_sec_total"
+      ],
+      "note": "Adjust query scaling and alert thresholds. Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_hyperv_datastore_cache_update_operation_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_cache_update_operation_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_commit_byte_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_commit_byte_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_commit_operation_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_commit_operation_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_compact_operation_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_compact_operation_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_load_file_operation_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_load_file_operation_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_query_size_operation_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_query_size_operation_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_read_from_file_byte_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_read_from_file_byte_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_read_from_storage_byte_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_read_from_storage_byte_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_reconnect_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_reconnect_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_remove_operation_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_remove_operation_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_set_operation_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_set_operation_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_write_to_file_byte_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_write_to_file_byte_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_datastore_write_to_storage_byte_latency_microseconds",
+      "new_metric": "windows_hyperv_datastore_write_to_storage_byte_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_block_cache_size",
+      "new_metric": "windows_mscluster_cluster_block_cache_size_bytes",
+      "unit_change": {
+        "from": "megabytes",
+        "to": "bytes",
+        "factor": 1048576
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_clus_svc_regroup_tick_in_milliseconds",
+      "new_metric": "windows_mscluster_cluster_clus_svc_regroup_tick_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_cluster_log_size",
+      "new_metric": "windows_mscluster_cluster_cluster_log_size_bytes",
+      "unit_change": {
+        "from": "megabytes",
+        "to": "bytes",
+        "factor": 1048576
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_cross_site_delay",
+      "new_metric": "windows_mscluster_cluster_cross_site_delay_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_cross_subnet_delay",
+      "new_metric": "windows_mscluster_cluster_cross_subnet_delay_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_grace_period_timeout",
+      "new_metric": "windows_mscluster_cluster_grace_period_timeout_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_root_memory_reserved",
+      "new_metric": "windows_mscluster_cluster_root_memory_reserved_bytes",
+      "unit_change": {
+        "from": "megabytes",
+        "to": "bytes",
+        "factor": 1048576
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_s2d_cache_flash_reserve_percent",
+      "new_metric": "windows_mscluster_cluster_s2d_cache_flash_reserve_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_s2d_cache_page_size_k_bytes",
+      "new_metric": "windows_mscluster_cluster_s2d_cache_page_size_bytes",
+      "unit_change": {
+        "from": "kilobytes",
+        "to": "bytes",
+        "factor": 1024
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_s2dio_latency_threshold",
+      "new_metric": "windows_mscluster_cluster_s2dio_latency_threshold_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_same_subnet_delay",
+      "new_metric": "windows_mscluster_cluster_same_subnet_delay_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_cluster_shutdown_timeout_in_minutes",
+      "new_metric": "windows_mscluster_cluster_shutdown_timeout_seconds",
+      "unit_change": {
+        "from": "minutes",
+        "to": "seconds",
+        "factor": 60
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_resource_deadlock_timeout",
+      "new_metric": "windows_mscluster_resource_deadlock_timeout_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_resource_is_alive_poll_interval",
+      "new_metric": "windows_mscluster_resource_is_alive_poll_interval_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_resource_looks_alive_poll_interval",
+      "new_metric": "windows_mscluster_resource_looks_alive_poll_interval_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_resource_pending_timeout",
+      "new_metric": "windows_mscluster_resource_pending_timeout_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_resource_restart_delay",
+      "new_metric": "windows_mscluster_resource_restart_delay_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_resource_restart_period",
+      "new_metric": "windows_mscluster_resource_restart_period_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_resource_retry_period_on_failure",
+      "new_metric": "windows_mscluster_resource_retry_period_on_failure_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mscluster_resourcegroup_failover_period",
+      "new_metric": "windows_mscluster_resourcegroup_failover_period_seconds",
+      "unit_change": {
+        "from": "hours",
+        "to": "seconds",
+        "factor": 3600
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mssql_bufman_extension_in_use_as_percentage",
+      "new_metric": "windows_mssql_bufman_extension_in_use_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mssql_databases_log_used_percent",
+      "new_metric": "windows_mssql_databases_log_used_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_netframework_clrjit_jit_time_percent",
+      "new_metric": "windows_netframework_clrjit_jit_time_ratio",
+      "unit_change": {
+        "from": "raw_counter_divided_by_frequency",
+        "to": "ratio"
+      },
+      "note": "The old calculation used the wrong denominator; no fixed conversion factor is available. Review calculations and thresholds."
+    },
+    {
+      "metric": "windows_netframework_clrmemory_gc_time_percent",
+      "new_metric": "windows_netframework_clrmemory_gc_time_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_netframework_clrsecurity_rt_checks_time_percent",
+      "new_metric": "windows_netframework_clrsecurity_rt_checks_time_ratio",
+      "unit_change": {
+        "from": "raw_counter_divided_by_frequency",
+        "to": "ratio"
+      },
+      "note": "The old calculation used the wrong denominator; no fixed conversion factor is available. Review calculations and thresholds."
+    },
+    {
+      "metric": "windows_storage_spaces_virtual_disk_storage_efficiency_percent",
+      "new_metric": "windows_storage_spaces_virtual_disk_storage_efficiency_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_time_clock_frequency_adjustment_ppb",
+      "new_metric": "windows_time_clock_frequency_adjustment_ratio",
+      "unit_change": {
+        "from": "parts_per_billion",
+        "to": "ratio",
+        "factor": 1e-09
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_vmware_cpu_effective_vm_speed_mhz_total",
+      "new_metric": "windows_vmware_cpu_effective_vm_speed_hertz",
+      "unit_change": {
+        "from": "megahertz",
+        "to": "hertz",
+        "factor": 1000000
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_vmware_cpu_limit_mhz",
+      "new_metric": "windows_vmware_cpu_limit_hertz",
+      "unit_change": {
+        "from": "megahertz",
+        "to": "hertz",
+        "factor": 1000000
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_vmware_cpu_reservation_mhz",
+      "new_metric": "windows_vmware_cpu_reservation_hertz",
+      "unit_change": {
+        "from": "megahertz",
+        "to": "hertz",
+        "factor": 1000000
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_vmware_host_processor_speed_mhz",
+      "new_metric": "windows_vmware_host_processor_speed_hertz",
+      "unit_change": {
+        "from": "megahertz",
+        "to": "hertz",
+        "factor": 1000000
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_hyperv_virtual_storage_device_throughput",
+      "new_metric": "windows_hyperv_virtual_storage_device_throughput_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_hyperv_virtual_storage_device_normalized_throughput",
+      "new_metric": "windows_hyperv_virtual_storage_device_normalized_throughput_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_hyperv_io_quota_replenishment_rate",
+      "new_metric": "windows_hyperv_virtual_storage_device_io_quota_replenishment_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_hyperv_root_partition_preferred_numa_node_index",
+      "new_metric": "windows_hyperv_root_partition_gpa_pages"
+    },
+    {
+      "metric": "windows_hyperv_root_partition_physical_pages_allocated",
+      "new_metric": "windows_hyperv_root_partition_skipped_timer_ticks_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_hyperv_root_partition_device_interrupt_throttle_events",
+      "new_metric": "windows_hyperv_root_partition_device_interrupt_throttle_events_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_hyperv_root_partition_io_tlb_flush_cost",
+      "new_metric": "windows_hyperv_root_partition_io_tlb_flush_seconds_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter. Divide its rate by `rate(windows_hyperv_root_partition_io_tlb_flushes_total)` for the average time per flush"
+    },
+    {
+      "metric": "windows_hyperv_root_partition_io_tlb_flush",
+      "new_metric": "windows_hyperv_root_partition_io_tlb_flushes_total",
+      "metric_aliases": [
+        "windows_hyperv_root_partition_io_tlb_flush_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_root_partition_gpa_space_modifications",
+      "new_metric": "windows_hyperv_root_partition_gpa_space_modifications_total"
+    },
+    {
+      "metric": "windows_hyperv_root_partition_virtual_tlb_flush_entries",
+      "new_metric": "windows_hyperv_root_partition_virtual_tlb_flush_entries_total"
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_virtual_processor_cpu_wait_time_per_dispatch_total",
+      "new_metric": "windows_hyperv_hypervisor_virtual_processor_cpu_wait_seconds_total",
+      "note": "Divide its rate by `rate(windows_hyperv_hypervisor_virtual_processor_dispatches_total)` for the average wait per dispatch"
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_root_virtual_cpu_wait_time_per_dispatch_total",
+      "new_metric": "windows_hyperv_hypervisor_root_virtual_processor_cpu_wait_seconds_total",
+      "note": "Divide its rate by `rate(windows_hyperv_hypervisor_root_virtual_processor_dispatches_total)` for the average wait per dispatch"
+    },
+    {
+      "metric": "windows_filetime_mtime_timestamp_seconds",
+      "new_metric": "windows_file_mtime_timestamp_seconds",
+      "added_labels": [
+        "pattern"
+      ],
+      "note": "Review aggregation and vector matching for the added label."
+    },
+    {
+      "metric": "windows_memory_commit_limit",
+      "new_metric": "windows_memory_commit_limit_bytes"
+    },
+    {
+      "metric": "windows_memory_pool_paged_allocs_total",
+      "new_metric": "windows_memory_pool_paged_allocs",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_memory_pool_nonpaged_allocs_total",
+      "new_metric": "windows_memory_pool_nonpaged_allocs"
+    },
+    {
+      "metric": "windows_smb_server_shares_read_requests_count_total",
+      "new_metric": "windows_smb_server_shares_read_requests_total"
+    },
+    {
+      "metric": "windows_smb_server_shares_write_requests_count_total",
+      "new_metric": "windows_smb_server_shares_write_requests_total"
+    },
+    {
+      "metric": "windows_smb_server_shares_metadata_requests_count_total",
+      "new_metric": "windows_smb_server_shares_metadata_requests_total"
+    },
+    {
+      "metric": "windows_smb_server_shares_files_opened_count_total",
+      "new_metric": "windows_smb_server_shares_files_opened_total"
+    },
+    {
+      "metric": "windows_iis_ipapi_extension_requests_total",
+      "new_metric": "windows_iis_isapi_extension_requests_total"
+    },
+    {
+      "metric": "windows_remote_fx_net_current_tcp_bandwidth",
+      "new_metric": "windows_remote_fx_net_current_tcp_bandwidth_bytes_per_second"
+    },
+    {
+      "metric": "windows_remote_fx_net_current_udp_bandwidth",
+      "new_metric": "windows_remote_fx_net_current_udp_bandwidth_bytes_per_second"
+    },
+    {
+      "metric": "windows_remote_fx_gfx_frame_quality",
+      "new_metric": "windows_remote_fx_gfx_frame_quality_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_remote_fx_net_loss_rate",
+      "new_metrics": [
+        "windows_remote_fx_net_lost_packets_total",
+        "windows_remote_fx_net_loss_sampled_packets_total"
+      ],
+      "replacement_query": "rate(windows_remote_fx_net_lost_packets_total[5m]) / rate(windows_remote_fx_net_loss_sampled_packets_total[5m])",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Old value was a running numerator, not a percentage. The suggested ratio of rates is not numerically equivalent to the old value. Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_remote_fx_net_fec_rate",
+      "new_metrics": [
+        "windows_remote_fx_net_fec_packets_total",
+        "windows_remote_fx_net_fec_sampled_packets_total"
+      ],
+      "replacement_query": "rate(windows_remote_fx_net_fec_packets_total[5m]) / rate(windows_remote_fx_net_fec_sampled_packets_total[5m])",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Old value was a running numerator, not a percentage. The suggested ratio of rates is not numerically equivalent to the old value. Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_remote_fx_net_retransmission_rate",
+      "new_metrics": [
+        "windows_remote_fx_net_retransmitted_packets_total",
+        "windows_remote_fx_net_retransmission_sampled_packets_total"
+      ],
+      "replacement_query": "rate(windows_remote_fx_net_retransmitted_packets_total[5m]) / rate(windows_remote_fx_net_retransmission_sampled_packets_total[5m])",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Old value was a running numerator, not a percentage. The suggested ratio of rates is not numerically equivalent to the old value. Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_ad_atq_average_request_latency",
+      "new_metric": "windows_ad_atq_average_request_latency_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_ad_sam_group_evaluation_latency",
+      "new_metric": "windows_ad_sam_group_evaluation_latency_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_ad_security_descriptor_propagation_access_wait_total_seconds",
+      "new_metric": "windows_ad_security_descriptor_propagation_average_exclusion_time_seconds",
+      "unit_change": {
+        "from": "milliseconds",
+        "to": "seconds",
+        "factor": 0.001
+      },
+      "note": "Adjust query scaling and alert thresholds. This is an average, not a cumulative total; do not infer a type transition from the old name."
+    },
+    {
+      "metric": "windows_ad_security_descriptor_propagation_events_total",
+      "new_metric": "windows_ad_security_descriptor_propagation_suboperations_total"
+    },
+    {
+      "metric": "windows_ad_security_descriptor_propagation_items_queued_total",
+      "new_metric": "windows_ad_security_descriptor_propagation_items_queued",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_dfsr_connection_bandwidth_savings_using_dfs_replication_bytes_total",
+      "new_metric": "windows_dfsr_connection_bandwidth_savings_using_dfs_replication_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "note": "Adjust query scaling and alert thresholds. Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_dfsr_folder_bandwidth_savings_using_dfs_replication_bytes_total",
+      "new_metric": "windows_dfsr_folder_bandwidth_savings_using_dfs_replication_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "note": "Adjust query scaling and alert thresholds. Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_dfsr_volume_usn_journal_unread_percentage",
+      "new_metric": "windows_dfsr_volume_usn_journal_unread_ratio",
+      "unit_change": {
+        "from": "percent",
+        "to": "ratio",
+        "factor": 0.01
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_iis_current_application_pool_start_time",
+      "new_metric": "windows_iis_current_application_pool_uptime_seconds"
+    },
+    {
+      "metric": "windows_iis_total_application_pool_start_time",
+      "new_metric": "windows_iis_total_application_pool_uptime_seconds",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_total_application_pool_start_time_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_time_since_last_worker_process_failure",
+      "new_metric": "windows_iis_time_since_last_worker_process_failure_seconds"
+    },
+    {
+      "metric": "windows_iis_http_request_total_rejected_request",
+      "new_metric": "windows_iis_http_requests_rejected_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "label_renames": {
+        "site": "app"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_iis_http_requests_arrival_rate",
+      "new_metric": "windows_iis_http_requests_arrived_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_iis_http_requests_max_queue_item_age",
+      "new_metric": "windows_iis_http_requests_max_queue_item_age_seconds"
+    },
+    {
+      "metric": "windows_dns_dynamic_updates_queued",
+      "new_metric": "windows_dns_dynamic_updates_queued_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_databases_log_flush_wait_seconds",
+      "new_metric": "windows_mssql_databases_log_flush_wait_seconds_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_databases_log_flush_write_seconds",
+      "new_metric": "windows_mssql_databases_log_flush_write_seconds_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_databases_log_growths",
+      "new_metric": "windows_mssql_databases_log_growths_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Use increase() for the event count."
+    },
+    {
+      "metric": "windows_mssql_databases_log_shrinks",
+      "new_metric": "windows_mssql_databases_log_shrinks_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Use increase() for the event count."
+    },
+    {
+      "metric": "windows_mssql_databases_log_truncations",
+      "new_metric": "windows_mssql_databases_log_truncations_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Use increase() for the event count."
+    },
+    {
+      "metric": "windows_mssql_databases_xtp_controller_dlc_fetch_latency_seconds",
+      "new_metric": "windows_mssql_databases_xtp_controller_dlc_fetch_latency_seconds_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Review rate() or increase() usage for the counter. Divide its `rate()` by that of the new `windows_mssql_databases_xtp_controller_dlc_fetches_total` Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_database_flow_control_wait_seconds",
+      "new_metric": "windows_mssql_dbreplica_database_flow_control_wait_seconds_total",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Adjust query scaling and alert thresholds. Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_group_commit_stall_seconds",
+      "new_metric": "windows_mssql_dbreplica_group_commit_stall_seconds_total",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Adjust query scaling and alert thresholds. Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_transaction_delay_seconds",
+      "new_metric": "windows_mssql_dbreplica_transaction_delay_seconds_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_recovery_queue_records",
+      "new_metric": "windows_mssql_dbreplica_recovery_queue_bytes",
+      "unit_change": {
+        "from": "kilobytes",
+        "to": "bytes",
+        "factor": 1024
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_log_send_queue",
+      "new_metric": "windows_mssql_dbreplica_log_send_queue_bytes",
+      "unit_change": {
+        "from": "kilobytes",
+        "to": "bytes",
+        "factor": 1024
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_log_remaining_for_undo",
+      "new_metric": "windows_mssql_dbreplica_log_remaining_for_undo_bytes",
+      "unit_change": {
+        "from": "kilobytes",
+        "to": "bytes",
+        "factor": 1024
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_total_log_requiring_undo",
+      "new_metric": "windows_mssql_dbreplica_total_log_requiring_undo_bytes",
+      "unit_change": {
+        "from": "kilobytes",
+        "to": "bytes",
+        "factor": 1024
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mssql_genstats_http_authenticated_requests",
+      "new_metric": "windows_mssql_genstats_http_authenticated_requests_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_mars_deadlocks",
+      "new_metric": "windows_mssql_genstats_mars_deadlocks_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_soap_empty_requests",
+      "new_metric": "windows_mssql_genstats_soap_empty_requests_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_soap_method_invocations",
+      "new_metric": "windows_mssql_genstats_soap_method_invocations_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_soap_session_initiate_requests",
+      "new_metric": "windows_mssql_genstats_soap_session_initiate_requests_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_soap_session_terminate_requests",
+      "new_metric": "windows_mssql_genstats_soap_session_terminate_requests_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_soapsql_requests",
+      "new_metric": "windows_mssql_genstats_soapsql_requests_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_soapwsdl_requests",
+      "new_metric": "windows_mssql_genstats_soapwsdl_requests_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_sql_trace_io_provider_lock_waits",
+      "new_metric": "windows_mssql_genstats_sql_trace_io_provider_lock_waits_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_tempdb_recovery_unit_ids_generated",
+      "new_metric": "windows_mssql_genstats_tempdb_recovery_unit_ids_generated_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_genstats_tempdb_rowset_ids_generated",
+      "new_metric": "windows_mssql_genstats_tempdb_rowset_ids_generated_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_locks_wait_time_seconds",
+      "new_metric": "windows_mssql_locks_wait_time_seconds_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_locks_count",
+      "removed": true,
+      "replacement_query": "windows_mssql_locks_lock_waits_total",
+      "note": "Equivalent duplicate value according to upstream. Use rate() for lock-wait event rates."
+    },
+    {
+      "metric": "windows_mssql_locks_lock_wait_seconds",
+      "new_metric": "windows_mssql_locks_lock_wait_seconds_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_transactions_nonsnapshot_version_active_total",
+      "new_metric": "windows_mssql_transactions_nonsnapshot_version_active",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_transactions_snapshot_active_total",
+      "new_metric": "windows_mssql_transactions_snapshot_active",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_transactions_update_snapshot_active_total",
+      "new_metric": "windows_mssql_transactions_update_snapshot_active",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_transactions_version_cleanup_rate_bytes",
+      "new_metric": "windows_mssql_transactions_version_cleanup_bytes_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_transactions_version_generation_rate_bytes",
+      "new_metric": "windows_mssql_transactions_version_generation_bytes_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_container_count",
+      "new_metric": "windows_containers"
+    },
+    {
+      "metric": "windows_container_cpu_usage_seconds_kernelmode",
+      "new_metric": "windows_container_cpu_usage_kernelmode_seconds_total",
+      "metric_aliases": [
+        "windows_container_cpu_usage_seconds_kernelmode_total"
+      ]
+    },
+    {
+      "metric": "windows_container_cpu_usage_seconds_usermode",
+      "new_metric": "windows_container_cpu_usage_usermode_seconds_total",
+      "metric_aliases": [
+        "windows_container_cpu_usage_seconds_usermode_total"
+      ]
+    },
+    {
+      "metric": "windows_cpu_time_total",
+      "new_metric": "windows_cpu_time_seconds_total"
+    },
+    {
+      "metric": "windows_diskdrive_size",
+      "new_metric": "windows_diskdrive_size_bytes"
+    },
+    {
+      "metric": "windows_exchange_availability_service_requests_per_sec",
+      "new_metric": "windows_exchange_availability_service_requests_total",
+      "metric_aliases": [
+        "windows_exchange_availability_service_requests_per_sec_total"
+      ]
+    },
+    {
+      "metric": "windows_exchange_http_proxy_avg_cas_processing_latency_sec",
+      "new_metric": "windows_exchange_http_proxy_avg_cas_processing_latency_seconds"
+    },
+    {
+      "metric": "windows_exchange_http_proxy_mailbox_server_locator_avg_latency_sec",
+      "new_metric": "windows_exchange_http_proxy_mailbox_server_locator_avg_latency_seconds"
+    },
+    {
+      "metric": "windows_exchange_ldap_read_time_sec",
+      "new_metric": "windows_exchange_ldap_read_time_seconds_total",
+      "metric_aliases": [
+        "windows_exchange_ldap_read_time_sec_total"
+      ]
+    },
+    {
+      "metric": "windows_exchange_ldap_search_time_sec",
+      "new_metric": "windows_exchange_ldap_search_time_seconds_total",
+      "metric_aliases": [
+        "windows_exchange_ldap_search_time_sec_total"
+      ]
+    },
+    {
+      "metric": "windows_exchange_ldap_write_time_sec",
+      "new_metric": "windows_exchange_ldap_write_time_seconds_total",
+      "metric_aliases": [
+        "windows_exchange_ldap_write_time_sec_total"
+      ]
+    },
+    {
+      "metric": "windows_exchange_mapihttp_emsmdb_active_user_count",
+      "new_metric": "windows_exchange_mapihttp_emsmdb_active_users"
+    },
+    {
+      "metric": "windows_exchange_rpc_active_user_count",
+      "new_metric": "windows_exchange_rpc_active_users"
+    },
+    {
+      "metric": "windows_exchange_rpc_avg_latency_sec",
+      "new_metric": "windows_exchange_rpc_avg_latency_seconds"
+    },
+    {
+      "metric": "windows_exchange_rpc_connection_count",
+      "new_metric": "windows_exchange_rpc_connections"
+    },
+    {
+      "metric": "windows_exchange_rpc_user_count",
+      "new_metric": "windows_exchange_rpc_users"
+    },
+    {
+      "metric": "windows_fsrmquota_count",
+      "new_metric": "windows_fsrmquota_quotas"
+    },
+    {
+      "metric": "windows_hyperv_datastore_cache_update_operation_count",
+      "new_metric": "windows_hyperv_datastore_cache_update_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_cache_update_operation_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_commit_byte_count",
+      "new_metric": "windows_hyperv_datastore_commit_bytes_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_commit_byte_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_commit_count",
+      "new_metric": "windows_hyperv_datastore_commits_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_commit_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_commit_operation_count",
+      "new_metric": "windows_hyperv_datastore_commit_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_commit_operation_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_compact_operation_count",
+      "new_metric": "windows_hyperv_datastore_compact_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_compact_operation_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_disconnect_count",
+      "new_metric": "windows_hyperv_datastore_disconnects_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_disconnect_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_load_file_operation_count",
+      "new_metric": "windows_hyperv_datastore_load_file_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_load_file_operation_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_query_size_operation_count",
+      "new_metric": "windows_hyperv_datastore_query_size_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_query_size_operation_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_read_from_file_byte_count",
+      "new_metric": "windows_hyperv_datastore_read_from_file_bytes_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_read_from_file_byte_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_read_from_file_count",
+      "new_metric": "windows_hyperv_datastore_read_from_file_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_read_from_file_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_read_from_storage_byte_count",
+      "new_metric": "windows_hyperv_datastore_read_from_storage_bytes_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_read_from_storage_byte_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_read_from_storage_count",
+      "new_metric": "windows_hyperv_datastore_read_from_storage_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_read_from_storage_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_remove_operation_count",
+      "new_metric": "windows_hyperv_datastore_remove_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_remove_operation_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_set_operation_count",
+      "new_metric": "windows_hyperv_datastore_set_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_set_operation_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_write_to_file_byte_count",
+      "new_metric": "windows_hyperv_datastore_write_to_file_bytes_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_write_to_file_byte_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_write_to_file_count",
+      "new_metric": "windows_hyperv_datastore_write_to_file_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_write_to_file_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_write_to_storage_byte_count",
+      "new_metric": "windows_hyperv_datastore_write_to_storage_bytes_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_write_to_storage_byte_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_datastore_write_to_storage_count",
+      "new_metric": "windows_hyperv_datastore_write_to_storage_operations_total",
+      "metric_aliases": [
+        "windows_hyperv_datastore_write_to_storage_count_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_host_logical_processor_count",
+      "new_metric": "windows_hyperv_host_logical_processors"
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_logical_processor_time_total",
+      "new_metric": "windows_hyperv_hypervisor_logical_processor_time_seconds_total"
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_logical_processor_total_run_time_total",
+      "new_metric": "windows_hyperv_hypervisor_logical_processor_total_run_time_seconds_total"
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_root_virtual_processor_time_total",
+      "new_metric": "windows_hyperv_hypervisor_root_virtual_processor_time_seconds_total"
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_root_virtual_processor_total_run_time_total",
+      "new_metric": "windows_hyperv_hypervisor_root_virtual_processor_total_run_time_seconds_total"
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_virtual_processor_mode_time_total",
+      "new_metric": "windows_hyperv_hypervisor_virtual_processor_mode_time_seconds_total"
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_virtual_processor_run_time_total",
+      "new_metric": "windows_hyperv_hypervisor_virtual_processor_run_time_seconds_total"
+    },
+    {
+      "metric": "windows_hyperv_root_partition_1G_device_pages",
+      "new_metric": "windows_hyperv_root_partition_1g_device_pages"
+    },
+    {
+      "metric": "windows_hyperv_root_partition_1G_gpa_pages",
+      "new_metric": "windows_hyperv_root_partition_1g_gpa_pages"
+    },
+    {
+      "metric": "windows_hyperv_root_partition_2M_device_pages",
+      "new_metric": "windows_hyperv_root_partition_2m_device_pages"
+    },
+    {
+      "metric": "windows_hyperv_root_partition_2M_gpa_pages",
+      "new_metric": "windows_hyperv_root_partition_2m_gpa_pages"
+    },
+    {
+      "metric": "windows_hyperv_root_partition_4K_device_pages",
+      "new_metric": "windows_hyperv_root_partition_4k_device_pages"
+    },
+    {
+      "metric": "windows_hyperv_root_partition_4K_gpa_pages",
+      "new_metric": "windows_hyperv_root_partition_4k_gpa_pages"
+    },
+    {
+      "metric": "windows_hyperv_total_vm_processor_count",
+      "new_metric": "windows_hyperv_assigned_vm_processors"
+    },
+    {
+      "metric": "windows_hyperv_virtual_machine_health_total_count",
+      "new_metric": "windows_hyperv_virtual_machines"
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_current_open_file_count",
+      "new_metric": "windows_hyperv_virtual_smb_open_files"
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_read_bytes_rdma",
+      "new_metric": "windows_hyperv_virtual_smb_rdma_read_bytes_total",
+      "metric_aliases": [
+        "windows_hyperv_virtual_smb_read_bytes_rdma_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_read_requests_rdma",
+      "new_metric": "windows_hyperv_virtual_smb_rdma_read_requests_total",
+      "metric_aliases": [
+        "windows_hyperv_virtual_smb_read_requests_rdma_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_tree_connect_count",
+      "new_metric": "windows_hyperv_virtual_smb_tree_connects_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_write_bytes_rdma",
+      "new_metric": "windows_hyperv_virtual_smb_rdma_write_bytes_total",
+      "metric_aliases": [
+        "windows_hyperv_virtual_smb_write_bytes_rdma_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_write_requests_rdma",
+      "new_metric": "windows_hyperv_virtual_smb_rdma_write_requests_total",
+      "metric_aliases": [
+        "windows_hyperv_virtual_smb_write_requests_rdma_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_virtual_storage_device_bytes_read",
+      "new_metric": "windows_hyperv_virtual_storage_device_read_bytes_total",
+      "metric_aliases": [
+        "windows_hyperv_virtual_storage_device_bytes_read_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_virtual_storage_device_bytes_written",
+      "new_metric": "windows_hyperv_virtual_storage_device_written_bytes_total",
+      "metric_aliases": [
+        "windows_hyperv_virtual_storage_device_bytes_written_total"
+      ]
+    },
+    {
+      "metric": "windows_hyperv_virtual_storage_device_error_count_total",
+      "new_metric": "windows_hyperv_virtual_storage_device_errors_total"
+    },
+    {
+      "metric": "windows_hyperv_vm_processor_count",
+      "new_metric": "windows_hyperv_vm_processors"
+    },
+    {
+      "metric": "windows_iis_service_uptime",
+      "new_metric": "windows_iis_service_uptime_seconds"
+    },
+    {
+      "metric": "windows_iis_total_application_pool_recycles",
+      "new_metric": "windows_iis_application_pool_recycles_total",
+      "metric_aliases": [
+        "windows_iis_total_application_pool_recycles_total"
+      ]
+    },
+    {
+      "metric": "windows_iis_total_worker_process_failures",
+      "new_metric": "windows_iis_worker_process_failures_total",
+      "metric_aliases": [
+        "windows_iis_total_worker_process_failures_total"
+      ]
+    },
+    {
+      "metric": "windows_iis_total_worker_process_ping_failures",
+      "new_metric": "windows_iis_worker_process_ping_failures_total",
+      "metric_aliases": [
+        "windows_iis_total_worker_process_ping_failures_total"
+      ]
+    },
+    {
+      "metric": "windows_iis_total_worker_process_shutdown_failures",
+      "new_metric": "windows_iis_worker_process_shutdown_failures_total",
+      "metric_aliases": [
+        "windows_iis_total_worker_process_shutdown_failures_total"
+      ]
+    },
+    {
+      "metric": "windows_iis_total_worker_process_startup_failures",
+      "new_metric": "windows_iis_worker_process_startup_failures_total",
+      "metric_aliases": [
+        "windows_iis_total_worker_process_startup_failures_total"
+      ]
+    },
+    {
+      "metric": "windows_iis_total_worker_processes_created",
+      "new_metric": "windows_iis_worker_processes_created_total",
+      "metric_aliases": [
+        "windows_iis_total_worker_processes_created_total"
+      ]
+    },
+    {
+      "metric": "windows_logical_disk_read_latency_seconds_total",
+      "new_metric": "windows_logical_disk_read_seconds_total"
+    },
+    {
+      "metric": "windows_logical_disk_write_latency_seconds_total",
+      "new_metric": "windows_logical_disk_write_seconds_total"
+    },
+    {
+      "metric": "windows_mscluster_cluster_add_evict_delay",
+      "new_metric": "windows_mscluster_cluster_add_evict_delay_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_clus_svc_hang_timeout",
+      "new_metric": "windows_mscluster_cluster_clus_svc_hang_timeout_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_clus_svc_regroup_opening_timeout",
+      "new_metric": "windows_mscluster_cluster_clus_svc_regroup_opening_timeout_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_clus_svc_regroup_pruning_timeout",
+      "new_metric": "windows_mscluster_cluster_clus_svc_regroup_pruning_timeout_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_clus_svc_regroup_stage_timeout",
+      "new_metric": "windows_mscluster_cluster_clus_svc_regroup_stage_timeout_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_cluster_group_wait_delay",
+      "new_metric": "windows_mscluster_cluster_cluster_group_wait_delay_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_group_dependency_timeout",
+      "new_metric": "windows_mscluster_cluster_group_dependency_timeout_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_quarantine_duration",
+      "new_metric": "windows_mscluster_cluster_quarantine_duration_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_quorum_arbitration_time_max",
+      "new_metric": "windows_mscluster_cluster_quorum_arbitration_time_max_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_quorum_arbitration_time_min",
+      "new_metric": "windows_mscluster_cluster_quorum_arbitration_time_min_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_request_reply_timeout",
+      "new_metric": "windows_mscluster_cluster_request_reply_timeout_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_resiliency_default_period",
+      "new_metric": "windows_mscluster_cluster_resiliency_default_period_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_shared_volume_vss_writer_operation_timeout",
+      "new_metric": "windows_mscluster_cluster_shared_volume_vss_writer_operation_timeout_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_witness_database_write_timeout",
+      "new_metric": "windows_mscluster_cluster_witness_database_write_timeout_seconds"
+    },
+    {
+      "metric": "windows_mscluster_cluster_witness_restart_interval",
+      "new_metric": "windows_mscluster_cluster_witness_restart_interval_seconds"
+    },
+    {
+      "metric": "windows_mscluster_resourcegroup_resiliency_period",
+      "new_metric": "windows_mscluster_resourcegroup_resiliency_period_seconds"
+    },
+    {
+      "metric": "windows_msmq_bytes_in_journal_queue",
+      "new_metric": "windows_msmq_journal_queue_bytes"
+    },
+    {
+      "metric": "windows_msmq_bytes_in_queue",
+      "new_metric": "windows_msmq_queue_bytes"
+    },
+    {
+      "metric": "windows_mssql_locks_lock_timeouts_excluding_NOWAIT",
+      "new_metric": "windows_mssql_locks_lock_timeouts_excluding_nowait_total",
+      "metric_aliases": [
+        "windows_mssql_locks_lock_timeouts_excluding_NOWAIT_total"
+      ]
+    },
+    {
+      "metric": "windows_nps_access_server_reset_time",
+      "new_metric": "windows_nps_access_server_reset_time_seconds",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_nps_access_server_reset_time_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_nps_access_server_up_time",
+      "new_metric": "windows_nps_access_server_up_time_seconds",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_nps_access_server_up_time_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_nps_accounting_server_reset_time",
+      "new_metric": "windows_nps_accounting_server_reset_time_seconds",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_nps_accounting_server_reset_time_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_nps_accounting_server_up_time",
+      "new_metric": "windows_nps_accounting_server_up_time_seconds",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_nps_accounting_server_up_time_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_printer_job_count",
+      "new_metric": "windows_printer_jobs",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_printer_job_count_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_process_cpu_time_total",
+      "new_metric": "windows_process_cpu_time_seconds_total"
+    },
+    {
+      "metric": "windows_smb_server_shares_current_open_file_count",
+      "new_metric": "windows_smb_server_shares_open_files",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_smb_server_shares_current_open_file_count_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_smb_server_shares_tree_connect_count",
+      "new_metric": "windows_smb_server_shares_tree_connects",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_smb_server_shares_tree_connect_count_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_tcp_connections_state_count",
+      "new_metric": "windows_tcp_connections"
+    },
+    {
+      "metric": "windows_ad_replication_highest_usn",
+      "new_metric": "windows_ad_replication_highest_usn_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_exchange_workload_completed_tasks",
+      "new_metric": "windows_exchange_workload_completed_tasks_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_exchange_workload_yielded_tasks",
+      "new_metric": "windows_exchange_workload_yielded_tasks_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_gpu_engine_time_seconds",
+      "new_metric": "windows_gpu_engine_time_seconds_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_hyperv_virtual_network_adapter_drop_reasons",
+      "new_metric": "windows_hyperv_virtual_network_adapter_drop_reasons_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_flush_requests",
+      "new_metric": "windows_hyperv_virtual_smb_flush_requests_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_read_bytes",
+      "new_metric": "windows_hyperv_virtual_smb_read_bytes_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_read_requests",
+      "new_metric": "windows_hyperv_virtual_smb_read_requests_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_received_bytes",
+      "new_metric": "windows_hyperv_virtual_smb_received_bytes_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_requests",
+      "new_metric": "windows_hyperv_virtual_smb_requests_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_sent_bytes",
+      "new_metric": "windows_hyperv_virtual_smb_sent_bytes_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_write_bytes",
+      "new_metric": "windows_hyperv_virtual_smb_write_bytes_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_write_requests",
+      "new_metric": "windows_hyperv_virtual_smb_write_requests_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_au_batch_cleanup_failures",
+      "new_metric": "windows_mssql_accessmethods_au_batch_cleanup_failures_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_au_batch_cleanups",
+      "new_metric": "windows_mssql_accessmethods_au_batch_cleanups_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_au_cleanups",
+      "new_metric": "windows_mssql_accessmethods_au_cleanups_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_by_reference_lob_creates",
+      "new_metric": "windows_mssql_accessmethods_by_reference_lob_creates_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_by_reference_lob_uses",
+      "new_metric": "windows_mssql_accessmethods_by_reference_lob_uses_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_column_value_pulls",
+      "new_metric": "windows_mssql_accessmethods_column_value_pulls_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_column_value_pushes",
+      "new_metric": "windows_mssql_accessmethods_column_value_pushes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_dropped_rowset_cleanups",
+      "new_metric": "windows_mssql_accessmethods_dropped_rowset_cleanups_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_dropped_rowset_skips",
+      "new_metric": "windows_mssql_accessmethods_dropped_rowset_skips_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_extent_allocations",
+      "new_metric": "windows_mssql_accessmethods_extent_allocations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_extent_deallocations",
+      "new_metric": "windows_mssql_accessmethods_extent_deallocations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_forwarded_records",
+      "new_metric": "windows_mssql_accessmethods_forwarded_records_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_free_space_page_fetches",
+      "new_metric": "windows_mssql_accessmethods_free_space_page_fetches_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_free_space_scans",
+      "new_metric": "windows_mssql_accessmethods_free_space_scans_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_full_scans",
+      "new_metric": "windows_mssql_accessmethods_full_scans_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_ghost_record_skips",
+      "new_metric": "windows_mssql_accessmethods_ghost_record_skips_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_index_searches",
+      "new_metric": "windows_mssql_accessmethods_index_searches_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_insysxact_waits",
+      "new_metric": "windows_mssql_accessmethods_insysxact_waits_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_leaf_page_cookie_failures",
+      "new_metric": "windows_mssql_accessmethods_leaf_page_cookie_failures_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_leaf_page_cookie_uses",
+      "new_metric": "windows_mssql_accessmethods_leaf_page_cookie_uses_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_lob_handle_creates",
+      "new_metric": "windows_mssql_accessmethods_lob_handle_creates_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_lob_handle_destroys",
+      "new_metric": "windows_mssql_accessmethods_lob_handle_destroys_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_lob_read_aheads",
+      "new_metric": "windows_mssql_accessmethods_lob_read_aheads_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_lob_ss_provider_creates",
+      "new_metric": "windows_mssql_accessmethods_lob_ss_provider_creates_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_lob_ss_provider_destroys",
+      "new_metric": "windows_mssql_accessmethods_lob_ss_provider_destroys_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_lob_ss_provider_truncations",
+      "new_metric": "windows_mssql_accessmethods_lob_ss_provider_truncations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_mixed_page_allocations",
+      "new_metric": "windows_mssql_accessmethods_mixed_page_allocations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_page_allocations",
+      "new_metric": "windows_mssql_accessmethods_page_allocations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_page_compression_attempts",
+      "new_metric": "windows_mssql_accessmethods_page_compression_attempts_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_page_compressions",
+      "new_metric": "windows_mssql_accessmethods_page_compressions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_page_deallocations",
+      "new_metric": "windows_mssql_accessmethods_page_deallocations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_page_splits",
+      "new_metric": "windows_mssql_accessmethods_page_splits_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_probe_scans",
+      "new_metric": "windows_mssql_accessmethods_probe_scans_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_range_scans",
+      "new_metric": "windows_mssql_accessmethods_range_scans_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_scan_point_revalidations",
+      "new_metric": "windows_mssql_accessmethods_scan_point_revalidations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_table_lock_escalations",
+      "new_metric": "windows_mssql_accessmethods_table_lock_escalations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_tree_page_cookie_failures",
+      "new_metric": "windows_mssql_accessmethods_tree_page_cookie_failures_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_tree_page_cookie_uses",
+      "new_metric": "windows_mssql_accessmethods_tree_page_cookie_uses_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_workfile_creates",
+      "new_metric": "windows_mssql_accessmethods_workfile_creates_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_worktables_creates",
+      "new_metric": "windows_mssql_accessmethods_worktables_creates_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_worktables_from_cache_hits",
+      "new_metric": "windows_mssql_accessmethods_worktables_from_cache_hits_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_accessmethods_worktables_from_cache_lookups",
+      "new_metric": "windows_mssql_accessmethods_worktables_from_cache_lookups_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_availreplica_flow_control_wait_seconds",
+      "new_metric": "windows_mssql_availreplica_flow_control_wait_seconds_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_availreplica_initiated_flow_controls",
+      "new_metric": "windows_mssql_availreplica_initiated_flow_controls_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_availreplica_received_from_replica_bytes",
+      "new_metric": "windows_mssql_availreplica_received_from_replica_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_availreplica_receives_from_replica",
+      "new_metric": "windows_mssql_availreplica_receives_from_replica_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_availreplica_resent_messages",
+      "new_metric": "windows_mssql_availreplica_resent_messages_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_availreplica_sends_to_replica",
+      "new_metric": "windows_mssql_availreplica_sends_to_replica_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_availreplica_sends_to_transport",
+      "new_metric": "windows_mssql_availreplica_sends_to_transport_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_availreplica_sent_to_replica_bytes",
+      "new_metric": "windows_mssql_availreplica_sent_to_replica_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_availreplica_sent_to_transport_bytes",
+      "new_metric": "windows_mssql_availreplica_sent_to_transport_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_background_writer_pages",
+      "new_metric": "windows_mssql_bufman_background_writer_pages_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_checkpoint_pages",
+      "new_metric": "windows_mssql_bufman_checkpoint_pages_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_extension_page_evictions",
+      "new_metric": "windows_mssql_bufman_extension_page_evictions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_extension_page_reads",
+      "new_metric": "windows_mssql_bufman_extension_page_reads_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_extension_page_writes",
+      "new_metric": "windows_mssql_bufman_extension_page_writes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_free_list_stalls",
+      "new_metric": "windows_mssql_bufman_free_list_stalls_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_lazywrites",
+      "new_metric": "windows_mssql_bufman_lazywrites_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_page_lookups",
+      "new_metric": "windows_mssql_bufman_page_lookups_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_page_reads",
+      "new_metric": "windows_mssql_bufman_page_reads_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_page_writes",
+      "new_metric": "windows_mssql_bufman_page_writes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_bufman_read_ahead_issuing_seconds",
+      "new_metric": "windows_mssql_bufman_read_ahead_issuing_seconds_total",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "metric_aliases": [
+        "windows_mssql_bufman_read_ahead_issuing_seconds_total"
+      ],
+      "note": "Adjust query scaling and alert thresholds. The old type is uncertain; do not infer a type transition. Historical OpenMetrics already used the new name but held microseconds. Verify exporter version; an unchanged name does not justify skipping unit review."
+    },
+    {
+      "metric": "windows_mssql_bufman_read_ahead_pages",
+      "new_metric": "windows_mssql_bufman_read_ahead_pages_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_backup_restore_operations",
+      "new_metric": "windows_mssql_databases_backup_restore_operations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_bulk_copy_bytes",
+      "new_metric": "windows_mssql_databases_bulk_copy_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_bulk_copy_rows",
+      "new_metric": "windows_mssql_databases_bulk_copy_rows_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_dbcc_logical_scan_bytes",
+      "new_metric": "windows_mssql_databases_dbcc_logical_scan_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_group_commit_stall_seconds",
+      "new_metric": "windows_mssql_databases_group_commit_stall_seconds_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_cache_reads",
+      "new_metric": "windows_mssql_databases_log_cache_reads_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_flush_waits",
+      "new_metric": "windows_mssql_databases_log_flush_waits_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_flushed_bytes",
+      "new_metric": "windows_mssql_databases_log_flushed_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_flushes",
+      "new_metric": "windows_mssql_databases_log_flushes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_cache_misses",
+      "new_metric": "windows_mssql_databases_log_pool_cache_misses_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_disk_reads",
+      "new_metric": "windows_mssql_databases_log_pool_disk_reads_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_empty_free_pool_pushes",
+      "new_metric": "windows_mssql_databases_log_pool_empty_free_pool_pushes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_hash_deletes",
+      "new_metric": "windows_mssql_databases_log_pool_hash_deletes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_hash_inserts",
+      "new_metric": "windows_mssql_databases_log_pool_hash_inserts_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_invalid_hash_entries",
+      "new_metric": "windows_mssql_databases_log_pool_invalid_hash_entries_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_log_scan_pushes",
+      "new_metric": "windows_mssql_databases_log_pool_log_scan_pushes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_log_writer_pushes",
+      "new_metric": "windows_mssql_databases_log_pool_log_writer_pushes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_low_memory_pushes",
+      "new_metric": "windows_mssql_databases_log_pool_low_memory_pushes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_no_free_buffer_pushes",
+      "new_metric": "windows_mssql_databases_log_pool_no_free_buffer_pushes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_req_behind_trunc",
+      "new_metric": "windows_mssql_databases_log_pool_req_behind_trunc_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_requests",
+      "new_metric": "windows_mssql_databases_log_pool_requests_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_log_pool_requests_old_vlf",
+      "new_metric": "windows_mssql_databases_log_pool_requests_old_vlf_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_repl_transactions",
+      "new_metric": "windows_mssql_databases_repl_transactions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_shrink_data_movement_bytes",
+      "new_metric": "windows_mssql_databases_shrink_data_movement_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_tracked_transactions",
+      "new_metric": "windows_mssql_databases_tracked_transactions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_transactions",
+      "new_metric": "windows_mssql_databases_transactions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_write_transactions",
+      "new_metric": "windows_mssql_databases_write_transactions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_databases_xtp_controller_log_processed_bytes",
+      "new_metric": "windows_mssql_databases_xtp_controller_log_processed_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_database_initiated_flow_controls",
+      "new_metric": "windows_mssql_dbreplica_database_initiated_flow_controls_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_group_commits",
+      "new_metric": "windows_mssql_dbreplica_group_commits_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_log_compressed_bytes",
+      "new_metric": "windows_mssql_dbreplica_log_compressed_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_log_compression_cachehits",
+      "new_metric": "windows_mssql_dbreplica_log_compression_cachehits_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_log_compression_cachemisses",
+      "new_metric": "windows_mssql_dbreplica_log_compression_cachemisses_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_log_compressions",
+      "new_metric": "windows_mssql_dbreplica_log_compressions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_log_decompressed_bytes",
+      "new_metric": "windows_mssql_dbreplica_log_decompressed_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_log_decompressions",
+      "new_metric": "windows_mssql_dbreplica_log_decompressions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_log_received_bytes",
+      "new_metric": "windows_mssql_dbreplica_log_received_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_mirrored_write_transactions",
+      "new_metric": "windows_mssql_dbreplica_mirrored_write_transactions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_received_file_bytes",
+      "new_metric": "windows_mssql_dbreplica_received_file_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_redo_blocks",
+      "new_metric": "windows_mssql_dbreplica_redo_blocks_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_redone_bytes",
+      "new_metric": "windows_mssql_dbreplica_redone_bytes_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_redones",
+      "new_metric": "windows_mssql_dbreplica_redones_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_genstats_connection_resets",
+      "new_metric": "windows_mssql_genstats_connection_resets_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_genstats_logins",
+      "new_metric": "windows_mssql_genstats_logins_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_genstats_logouts",
+      "new_metric": "windows_mssql_genstats_logouts_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_genstats_non_atomic_yields",
+      "new_metric": "windows_mssql_genstats_non_atomic_yields_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_genstats_temp_tables_creations",
+      "new_metric": "windows_mssql_genstats_temp_tables_creations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_locks_deadlocks",
+      "new_metric": "windows_mssql_locks_deadlocks_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_locks_lock_requests",
+      "new_metric": "windows_mssql_locks_lock_requests_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_locks_lock_timeouts",
+      "new_metric": "windows_mssql_locks_lock_timeouts_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_locks_lock_waits",
+      "new_metric": "windows_mssql_locks_lock_waits_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_auto_parameterization_attempts",
+      "new_metric": "windows_mssql_sqlstats_auto_parameterization_attempts_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_batch_requests",
+      "new_metric": "windows_mssql_sqlstats_batch_requests_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_failed_auto_parameterization_attempts",
+      "new_metric": "windows_mssql_sqlstats_failed_auto_parameterization_attempts_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_forced_parameterizations",
+      "new_metric": "windows_mssql_sqlstats_forced_parameterizations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_guided_plan_executions",
+      "new_metric": "windows_mssql_sqlstats_guided_plan_executions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_misguided_plan_executions",
+      "new_metric": "windows_mssql_sqlstats_misguided_plan_executions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_safe_auto_parameterization_attempts",
+      "new_metric": "windows_mssql_sqlstats_safe_auto_parameterization_attempts_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_sql_attentions",
+      "new_metric": "windows_mssql_sqlstats_sql_attentions_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_sql_compilations",
+      "new_metric": "windows_mssql_sqlstats_sql_compilations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_sql_recompilations",
+      "new_metric": "windows_mssql_sqlstats_sql_recompilations_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_sqlstats_unsafe_auto_parameterization_attempts",
+      "new_metric": "windows_mssql_sqlstats_unsafe_auto_parameterization_attempts_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_transactions_version_store_creation_units",
+      "new_metric": "windows_mssql_transactions_version_store_creation_units_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_mssql_transactions_version_store_truncation_units",
+      "new_metric": "windows_mssql_transactions_version_store_truncation_units_total",
+      "note": "Old type and historical OpenMetrics name are uncertain; verify the stored name before changing _total."
+    },
+    {
+      "metric": "windows_nps_access_accepts",
+      "new_metric": "windows_nps_access_accepts_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_bad_authenticators",
+      "new_metric": "windows_nps_access_bad_authenticators_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_challenges",
+      "new_metric": "windows_nps_access_challenges_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_dropped_packets",
+      "new_metric": "windows_nps_access_dropped_packets_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_invalid_requests",
+      "new_metric": "windows_nps_access_invalid_requests_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_malformed_packets",
+      "new_metric": "windows_nps_access_malformed_packets_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_packets_received",
+      "new_metric": "windows_nps_access_packets_received_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_packets_sent",
+      "new_metric": "windows_nps_access_packets_sent_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_rejects",
+      "new_metric": "windows_nps_access_rejects_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_requests",
+      "new_metric": "windows_nps_access_requests_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_access_unknown_type",
+      "new_metric": "windows_nps_access_unknown_type_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_bad_authenticators",
+      "new_metric": "windows_nps_accounting_bad_authenticators_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_dropped_packets",
+      "new_metric": "windows_nps_accounting_dropped_packets_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_invalid_requests",
+      "new_metric": "windows_nps_accounting_invalid_requests_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_malformed_packets",
+      "new_metric": "windows_nps_accounting_malformed_packets_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_no_record",
+      "new_metric": "windows_nps_accounting_no_record_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_packets_received",
+      "new_metric": "windows_nps_accounting_packets_received_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_packets_sent",
+      "new_metric": "windows_nps_accounting_packets_sent_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_requests",
+      "new_metric": "windows_nps_accounting_requests_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_responses",
+      "new_metric": "windows_nps_accounting_responses_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_nps_accounting_unknown_type",
+      "new_metric": "windows_nps_accounting_unknown_type_total",
+      "note": "OpenMetrics already stored the new _total name; rename only references to the old name."
+    },
+    {
+      "metric": "windows_memory_free_system_page_table_entries",
+      "removed": true,
+      "note": "Removed; upstream specifies no replacement."
+    },
+    {
+      "metric": "windows_logical_disk_avg_read_requests_queued",
+      "removed": true,
+      "replacement_query": "rate(windows_logical_disk_read_seconds_total[5m])",
+      "note": "Suggested replacement; not numerically equivalent to the old value."
+    },
+    {
+      "metric": "windows_logical_disk_avg_write_requests_queued",
+      "removed": true,
+      "replacement_query": "rate(windows_logical_disk_write_seconds_total[5m])",
+      "note": "Suggested replacement; not numerically equivalent to the old value."
+    },
+    {
+      "metric": "windows_logical_disk_read_write_latency_seconds_total",
+      "removed": true,
+      "replacement_query": "rate(windows_logical_disk_read_seconds_total[5m]) + rate(windows_logical_disk_write_seconds_total[5m])",
+      "note": "Suggested replacement; not numerically equivalent to the old value."
+    },
+    {
+      "metric": "windows_cache_data_map_hits_percent",
+      "removed": true,
+      "replacement_query": "rate(windows_cache_data_map_hits_total[5m]) / rate(windows_cache_data_maps_total[5m])",
+      "note": "Suggested replacement; not numerically equivalent to the old value."
+    },
+    {
+      "metric": "windows_mscluster_cluster_quorum_log_file_size",
+      "removed": true,
+      "note": "Removed; upstream specifies no replacement."
+    },
+    {
+      "metric": "windows_mscluster_cluster_resource_dll_deadlock_period",
+      "removed": true,
+      "note": "Removed; upstream specifies no replacement."
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_virtual_processor_time_total",
+      "removed": true,
+      "replacement_query": "windows_hyperv_hypervisor_virtual_processor_mode_time_seconds_total",
+      "note": "Equivalent duplicate value according to upstream."
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_virtual_processor_total_run_time_total",
+      "removed": true,
+      "replacement_query": "windows_hyperv_hypervisor_virtual_processor_run_time_seconds_total",
+      "note": "Equivalent duplicate value according to upstream."
+    },
+    {
+      "metric": "windows_hyperv_virtual_storage_device_latency_seconds",
+      "removed": true,
+      "replacement_query": "rate(windows_hyperv_virtual_storage_device_io_latency_seconds_total[5m]) / rate(windows_hyperv_virtual_storage_device_throughput_total[5m])",
+      "note": "Suggested replacement; not numerically equivalent to the old value."
+    },
+    {
+      "metric": "windows_hyperv_virtual_storage_device_lower_latency_seconds",
+      "removed": true,
+      "replacement_query": "rate(windows_hyperv_virtual_storage_device_lower_io_latency_seconds_total[5m]) / rate(windows_hyperv_virtual_storage_device_throughput_total[5m])",
+      "note": "Suggested ratio expanded from upstream's 'the same way'; not numerically equivalent to the old running ticks."
+    },
+    {
+      "metric": "windows_hyperv_virtual_storage_device_queue_length",
+      "removed": true,
+      "replacement_query": "rate(windows_hyperv_virtual_storage_device_io_latency_seconds_total[5m])",
+      "note": "Suggested replacement; not numerically equivalent to the old value."
+    },
+    {
+      "metric": "windows_hyperv_virtual_storage_device_lower_queue_length",
+      "removed": true,
+      "replacement_query": "rate(windows_hyperv_virtual_storage_device_lower_io_latency_seconds_total[5m])",
+      "note": "Suggested replacement; not numerically equivalent to the old value."
+    },
+    {
+      "metric": "windows_scheduled_task_last_result",
+      "removed": true,
+      "replacement_query": "windows_scheduled_task_last_result_status{status=\"success\"}",
+      "note": "Suggested replacement; not numerically equivalent to the old value."
+    },
+    {
+      "metric": "windows_iis_server_output_cache_items",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_server_output_cache_items_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_worker_output_cache_items",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_worker_output_cache_items_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_server_output_cache_memory_bytes",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_server_output_cache_memory_bytes_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_worker_output_cache_memory_bytes",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_worker_output_cache_memory_bytes_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_server_output_cache_active_flushed_items",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_server_output_cache_active_flushed_items_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_worker_output_cache_active_flushed_items",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_worker_output_cache_active_flushed_items_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_worker_current_requests",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_worker_current_requests_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_worker_current_websocket_requests",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_worker_current_websocket_requests_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_worker_max_threads",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_worker_max_threads_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_cache_copy_read_hits_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_udp_datagram_received_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_hyperv_legacy_network_adapter_bytes_dropped_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_mssql_waitstats_lock_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_lock_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_log_buffer_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_log_buffer_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_log_write_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_log_write_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_memory_grant_queue_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_memory_grant_queue_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_network_io_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_network_io_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_nonpage_latch_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_nonpage_latch_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_page_io_latch_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_page_io_latch_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_page_latch_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_page_latch_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_thread_safe_memory_objects_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_thread_safe_memory_objects_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_transaction_ownership_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_transaction_ownership_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_wait_for_the_worker_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_wait_for_the_worker_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_waitstats_workspace_synchronization_waits",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_waitstats_workspace_synchronization_waits_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_mssql_transactions_version_store_units",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_mssql_transactions_version_store_units_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_exchange_workload_queued_tasks",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_exchange_workload_queued_tasks_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_server_file_cache_max_memory_bytes",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_server_file_cache_max_memory_bytes_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_iis_worker_file_cache_max_memory_bytes",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "metric_aliases": [
+        "windows_iis_worker_file_cache_max_memory_bytes_total"
+      ],
+      "note": "Query the gauge directly; remove rate() or increase() where used."
+    },
+    {
+      "metric": "windows_netframework_clrjit_jit_standard_failures_total",
+      "type_change": {
+        "from": "gauge",
+        "to": "counter"
+      },
+      "note": "Review rate() or increase() usage for the counter."
+    },
+    {
+      "metric": "windows_dfsr_connection_*",
+      "label_renames": {
+        "name": "connection"
+      }
+    },
+    {
+      "metric": "windows_dfsr_folder_*",
+      "label_renames": {
+        "name": "folder"
+      }
+    },
+    {
+      "metric": "windows_dfsr_volume_*",
+      "label_renames": {
+        "name": "volume"
+      }
+    },
+    {
+      "metric": "windows_dhcp_scope_info",
+      "label_renames": {
+        "name": "scope_name"
+      }
+    },
+    {
+      "metric": "windows_diskdrive_*",
+      "label_renames": {
+        "name": "device_id"
+      },
+      "exclude_metrics": [
+        "windows_diskdrive_info"
+      ]
+    },
+    {
+      "metric": "windows_diskdrive_info",
+      "removed_labels": [
+        "name"
+      ],
+      "note": "name duplicated device_id and was removed; select or group by the existing device_id label."
+    },
+    {
+      "metric": "windows_dns_wmi_stats_total",
+      "label_renames": {
+        "name": "statistic"
+      }
+    },
+    {
+      "metric": "windows_exchange_ldap_*",
+      "label_renames": {
+        "name": "process"
+      }
+    },
+    {
+      "metric": "windows_exchange_http_proxy_*",
+      "label_renames": {
+        "name": "protocol"
+      }
+    },
+    {
+      "metric": "windows_exchange_transport_queues_*",
+      "label_renames": {
+        "name": "queue"
+      }
+    },
+    {
+      "metric": "windows_exchange_workload_*",
+      "label_renames": {
+        "name": "workload"
+      }
+    },
+    {
+      "metric": "windows_hyperv_virtual_smb_*",
+      "label_renames": {
+        "exported_instance": "vm"
+      },
+      "conditional_label_renames": [
+        {
+          "from": "instance",
+          "to": "vm",
+          "when": {
+            "label_source": "exporter",
+            "honor_labels": true
+          },
+          "on_false": "preserve",
+          "on_unknown": "review"
+        }
+      ],
+      "note": "Preserve the target instance label. Rename instance only with confirmed exporter provenance and honor_labels=true; otherwise preserve it or review unknown provenance. Metric renames remain independent; this label change does not require changing rate()."
+    },
+    {
+      "metric": "windows_mscluster_cluster_*",
+      "label_renames": {
+        "name": "cluster"
+      }
+    },
+    {
+      "metric": "windows_mscluster_network_*",
+      "label_renames": {
+        "name": "network"
+      }
+    },
+    {
+      "metric": "windows_mscluster_node_*",
+      "label_renames": {
+        "name": "node"
+      }
+    },
+    {
+      "metric": "windows_mscluster_resource_*",
+      "label_renames": {
+        "name": "resource",
+        "node_name": "node",
+        "owner_group": "resource_group"
+      }
+    },
+    {
+      "metric": "windows_mscluster_resourcegroup_*",
+      "label_renames": {
+        "name": "resource_group",
+        "node_name": "node"
+      }
+    },
+    {
+      "metric": "windows_mscluster_shared_volumes_*",
+      "label_renames": {
+        "name": "shared_volume"
+      }
+    },
+    {
+      "metric": "windows_msmq_*",
+      "label_renames": {
+        "name": "queue"
+      }
+    },
+    {
+      "metric": "windows_registry_key_success",
+      "label_renames": {
+        "name": "key"
+      }
+    },
+    {
+      "metric": "windows_service_*",
+      "label_renames": {
+        "name": "service"
+      }
+    },
+    {
+      "metric": "windows_storage_spaces_pool_*",
+      "label_renames": {
+        "name": "pool"
+      }
+    },
+    {
+      "metric": "windows_storage_spaces_virtual_disk_*",
+      "label_renames": {
+        "name": "virtual_disk"
+      }
+    },
+    {
+      "metric": "windows_wmi_query_success",
+      "label_renames": {
+        "name": "query"
+      }
+    },
+    {
+      "metric": "windows_wmi_query_duration_seconds",
+      "label_renames": {
+        "name": "query"
+      }
+    },
+    {
+      "metric": "windows_os_info",
+      "added_labels": [
+        "installation_type"
+      ],
+      "note": "Review aggregation and vector matching for the added label."
+    },
+    {
+      "metric": "windows_service_info",
+      "added_labels": [
+        "delayed_start",
+        "trigger_start"
+      ],
+      "note": "Review aggregation and vector matching for the added labels."
+    },
+    {
+      "metric": "windows_iis_http_requests_*",
+      "label_renames": {
+        "site": "app"
+      }
+    },
+    {
+      "metric": "windows_netframework_*",
+      "added_labels": [
+        "process_id"
+      ],
+      "note": "A process restart starts a new series. To retain old grouping, consider without (process_id) or by (process); the PID can be empty."
+    },
+    {
+      "metric": "windows_hyperv_dynamic_memory_vm_*",
+      "label_value_changes": [
+        {
+          "label": "vm",
+          "from": "------",
+          "to": "(unknown) or (unknown)#N"
+        },
+        {
+          "label": "vm",
+          "from": "<duplicate instance name>",
+          "to": "<name>#1, <name>#2, ..."
+        }
+      ],
+      "note": "Review filters for unnamed VM instances; #N denotes a duplicate-instance suffix. Only later duplicate names gain suffixes; they depend on sample order. Review label-value filters; suffixes are not stable identities."
+    },
+    {
+      "metric": "windows_hyperv_vid_*",
+      "label_value_changes": [
+        {
+          "label": "vm",
+          "from": "<duplicate instance name>",
+          "to": "<name>#1, <name>#2, ..."
+        }
+      ],
+      "note": "Only later duplicate names gain suffixes; they depend on sample order. Review label-value filters; suffixes are not stable identities."
+    },
+    {
+      "metric": "windows_hyperv_hypervisor_virtual_processor_*",
+      "label_value_changes": [
+        {
+          "label": "vm",
+          "from": "<duplicate instance name>",
+          "to": "<name>#1, <name>#2, ..."
+        }
+      ],
+      "note": "Only later duplicate names gain suffixes; they depend on sample order. Review label-value filters; suffixes are not stable identities."
+    },
+    {
+      "metric": "windows_hyperv_replica_vm_*",
+      "label_value_changes": [
+        {
+          "label": "vm",
+          "from": "<duplicate instance name>",
+          "to": "<name>#1, <name>#2, ..."
+        }
+      ],
+      "note": "Only later duplicate names gain suffixes; they depend on sample order. Review label-value filters; suffixes are not stable identities."
+    },
+    {
+      "metric": "windows_hyperv_vswitch_*",
+      "label_value_changes": [
+        {
+          "from": "<duplicate instance name>",
+          "to": "<name>#1, <name>#2, ..."
+        }
+      ],
+      "note": "Only later duplicate names gain suffixes; they depend on sample order. Review label-value filters; suffixes are not stable identities. Upstream does not name the switch label key; inspect the query labels rather than assuming a key."
+    },
+    {
+      "metric": "windows_terminal_services_connection_broker_performance_total",
+      "removed": true,
+      "label_matchers": {
+        "connection": "Pending"
+      },
+      "replacement_query": "windows_terminal_services_connection_broker_pending_connections",
+      "type_change": {
+        "from": "counter",
+        "to": "gauge"
+      },
+      "note": "Only connection=\"Pending\" is removed. Use the replacement gauge directly; remove rate()/increase(). This is not an equivalent counter value."
+    },
+    {
+      "metric": "windows_terminal_services_cpu_time_seconds_total",
+      "label_value_changes": [
+        {
+          "label": "mode",
+          "from": "session name",
+          "to": "CPU mode"
+        },
+        {
+          "label": "session_name",
+          "from": "CPU mode",
+          "to": "session name"
+        }
+      ],
+      "note": "The two label values were swapped in 0.31. Review matchers by their intended meaning, not by automatic text replacement."
+    },
+    {
+      "metric": "windows_mssql_databases_xtp_controller_dlc_peak_latency_seconds",
+      "unit_change": {
+        "from": "microseconds",
+        "to": "seconds",
+        "factor": 1e-06
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_mssql_dbreplica_redo_remaining_bytes",
+      "unit_change": {
+        "from": "kilobytes",
+        "to": "bytes",
+        "factor": 1024
+      },
+      "note": "Adjust query scaling and alert thresholds."
+    },
+    {
+      "metric": "windows_remote_fx_gfx_frames_skipped_insufficient_resource_total",
+      "label_value_changes": [
+        {
+          "label": "resource",
+          "from": "client",
+          "to": "server"
+        },
+        {
+          "label": "resource",
+          "from": "server",
+          "to": "client"
+        }
+      ],
+      "note": "client/server label assignments were swapped in 0.31. Review filters against intended resources; do not swap values automatically."
+    },
+    {
+      "metric": "windows_gpu_info",
+      "label_renames": {
+        "phys": "device_number"
+      }
+    },
+    {
+      "metric": "windows_logical_disk_bitlocker_status",
+      "label_value_changes": [
+        {
+          "label": "status",
+          "from": "disabled",
+          "to": "off"
+        }
+      ],
+      "note": "Only review queries that match status=\"disabled\". Check status=\"off\" for unencrypted volumes; this is a state-semantics correction, not guaranteed numerical equivalence or an unconditional replacement."
+    },
+    {
+      "metric": "windows_process_info",
+      "label_value_changes": [
+        {
+          "label": "owner",
+          "from": "user\\DOMAIN",
+          "to": "DOMAIN\\user"
+        }
+      ],
+      "note": "Only review owner label-value matchers. The owner format changes; the metric name does not. Adjust the literal or regex to the intended account."
+    }
+  ]
+}

@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"fluent-bit-helper/analyzer"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,23 +19,42 @@ var staticFiles embed.FS
 // const listenAddr = ":8443"
 const listenAddr = ":8080"
 
-// Run starts the Fluent-Bit config generator web service.
-func Run() error {
-	// gin.SetMode(gin.ReleaseMode)
-
-	// r := gin.New()
-	// r.Use(gin.Recovery())
-
+// NewRouter builds the tool pages and APIs with one verified migration rule set.
+func NewRouter() (*gin.Engine, error) {
+	engine, err := analyzer.New()
+	if err != nil {
+		return nil, err
+	}
 	r := gin.Default()
-
 	registerAPI(r)
+	r.POST("/api/metrics-analyzer/analyze", metricsHandler(engine))
 
 	staticFS, err := fs.Sub(staticFiles, "static")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	r.StaticFS("/", http.FS(staticFS))
+	r.StaticFS("/static", http.FS(staticFS))
+	for path, file := range map[string]string{"/": "index.html", "/metrics-analyzer": "metrics.html"} {
+		content, err := fs.ReadFile(staticFS, file)
+		if err != nil {
+			return nil, err
+		}
+		// Serve page bytes explicitly: http.FileServer redirects index.html.
+		r.Match([]string{http.MethodGet, http.MethodHead}, path, func(c *gin.Context) { c.Data(http.StatusOK, "text/html; charset=utf-8", content) })
+	}
+	// Preserve the old asset URLs for existing links without a root catch-all.
+	r.StaticFileFS("/style.css", "style.css", http.FS(staticFS))
+	r.StaticFileFS("/app.js", "app.js", http.FS(staticFS))
+	return r, nil
+}
+
+// Run starts the tool service using the existing listen address.
+func Run() error {
+	r, err := NewRouter()
+	if err != nil {
+		return err
+	}
 
 	// certFilePath, keyFilePath, err := loadTLSFiles()
 	// if err != nil {
