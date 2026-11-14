@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -10,43 +11,7 @@ import (
 	promparser "github.com/prometheus/prometheus/promql/parser"
 )
 
-type selectorContext struct {
-	name        string
-	matchers    []*labels.Matcher
-	labelRefs   map[string]bool
-	functions   map[string]bool
-	labelStatus map[string]Status
-	selector    *promparser.VectorSelector
-	path        []promparser.Node
-}
-
-// A grouping or function reference can observe a label created or discarded
-// below it. Such references cannot prove that an exporter label must change.
-func (ctx *selectorContext) reference(label string, position int, path []promparser.Node) {
-	level := RequiresChange
-	for _, child := range path[position+1:] {
-		switch n := child.(type) {
-		case *promparser.AggregateExpr:
-			contains := false
-			for _, l := range n.Grouping {
-				contains = contains || l == label
-			}
-			if (n.Without && contains) || (!n.Without && !contains) {
-				level = Review
-			}
-		case *promparser.Call:
-			if (n.Func.Name == "label_replace" || n.Func.Name == "label_join") && len(n.Args) > 1 {
-				if target, ok := n.Args[1].(*promparser.StringLiteral); ok && target.Val == label {
-					level = Review
-				}
-			}
-		}
-	}
-	ctx.labelRefs[label] = true
-	if ctx.labelStatus[label] != RequiresChange {
-		ctx.labelStatus[label] = level
-	}
-}
+var metricName = regexp.MustCompile(`^[a-zA-Z_:][a-zA-Z0-9_:]*$`)
 
 // parseInput substitutes known time macros only outside quoted strings/comments.
 // It never substitutes an unknown variable into a fabricated metric identity.
@@ -150,112 +115,46 @@ func parseInput(query string) (string, error) {
 	return out.String(), nil
 }
 
-func (e *Engine) analyzeQuery(refID, expr string) QueryResult {
-	result := QueryResult{RefID: refID, Expr: expr, Status: NoImpact, Complete: true, Findings: []Finding{}}
+// extractMetrics uses the existing PromQL parser only for exact selector names.
+// Parser errors and original expressions are deliberately absent from the report.
+func extractMetrics(expr string) ([]string, []string) {
 	input, err := parseInput(expr)
 	if err != nil {
-		result.Complete = false
-		result.Status = Review
-		result.Issues = []string{err.Error()}
-		return result
+		return nil, []string{err.Error()}
 	}
 	ast, err := promparser.ParseExpr(input)
 	if err != nil {
-		result.Complete = false
-		result.Status = Review
-		result.Issues = []string{"PromQL could not be parsed; check syntax and unresolved variables. " + err.Error()}
-		return result
+		return nil, []string{"PromQL metric extraction failed; check syntax and unresolved variables."}
 	}
-	merged := map[string]*Finding{}
-	promparser.Inspect(ast, func(node promparser.Node, path []promparser.Node) error {
+	names := map[string]bool{}
+	var issues []string
+	promparser.Inspect(ast, func(node promparser.Node, _ []promparser.Node) error {
 		vs, ok := node.(*promparser.VectorSelector)
 		if !ok {
 			return nil
 		}
-		ctx := selectorContext{name: vs.Name, matchers: vs.LabelMatchers, labelRefs: map[string]bool{}, functions: map[string]bool{}, labelStatus: map[string]Status{}, selector: vs, path: path}
+		name := vs.Name
 		for _, m := range vs.LabelMatchers {
-			ctx.labelRefs[m.Name] = true
-			ctx.labelStatus[m.Name] = RequiresChange
 			if m.Name == "__name__" && m.Type == labels.MatchEqual {
-				ctx.name = m.Value
+				name = m.Value
 			}
 		}
-		if ctx.name == "" || strings.Contains(ctx.name, "$") {
-			result.Complete = false
-			result.Issues = appendUnique(result.Issues, "A selector without an exact metric name (including __name__ regex selectors) cannot be exhaustively matched; review this query.")
+		if !metricName.MatchString(name) {
+			issues = appendUnique(issues, "A selector has no exact metric name; regex or dynamic metric selectors are not fully covered.")
 			return nil
 		}
-		for pi, parent := range path {
-			switch n := parent.(type) {
-			case *promparser.Call:
-				ctx.functions[n.Func.Name] = true
-				if n.Func.Name == "label_replace" || n.Func.Name == "label_join" {
-					for i, arg := range n.Args {
-						if s, ok := arg.(*promparser.StringLiteral); ok {
-							if (n.Func.Name == "label_replace" && i == 3) || (n.Func.Name == "label_join" && i >= 3) {
-								ctx.reference(s.Val, pi, path)
-							}
-						}
-					}
-				}
-			case *promparser.AggregateExpr:
-				for _, l := range n.Grouping {
-					ctx.reference(l, pi, path)
-				}
-			case *promparser.BinaryExpr:
-				if n.VectorMatching != nil {
-					for _, l := range n.VectorMatching.MatchingLabels {
-						ctx.reference(l, pi, path)
-					}
-					var branch promparser.Node = node
-					if pi+1 < len(path) {
-						branch = path[pi+1]
-					}
-					if (n.VectorMatching.Card == promparser.CardManyToOne && branch == n.RHS) || (n.VectorMatching.Card == promparser.CardOneToMany && branch == n.LHS) {
-						for _, l := range n.VectorMatching.Include {
-							ctx.reference(l, pi, path)
-						}
-					}
-				}
-			}
-		}
-		f := e.match(ctx)
-		if len(f.Changes) == 0 {
-			return nil
-		}
-		if old := merged[ctx.name]; old != nil {
-			for _, c := range f.Changes {
-				old.Changes = uniqueChange(old.Changes, c)
-			}
-			for _, s := range f.Notes {
-				old.Notes = appendUnique(old.Notes, s)
-			}
-			for _, s := range f.Functions {
-				old.Functions = appendUnique(old.Functions, s)
-			}
-			for _, s := range f.NewMetrics {
-				old.NewMetrics = appendUnique(old.NewMetrics, s)
-			}
-			old.Status = combine(old.Status, f.Status)
-		} else {
-			merged[ctx.name] = &f
-		}
+		names[name] = true
 		return nil
 	})
-	names := make([]string, 0, len(merged))
-	for name := range merged {
-		names = append(names, name)
+	return sortedNames(names), issues
+}
+
+func sortedNames(names map[string]bool) []string {
+	result := make([]string, 0, len(names))
+	for name := range names {
+		result = append(result, name)
 	}
-	sort.Strings(names)
-	for _, name := range names {
-		f := *merged[name]
-		sort.Strings(f.Functions)
-		result.Findings = append(result.Findings, f)
-		result.Status = combine(result.Status, f.Status)
-	}
-	if !result.Complete {
-		result.Status = combine(result.Status, Review)
-	}
+	sort.Strings(result)
 	return result
 }
 
@@ -266,15 +165,4 @@ func appendUnique(values []string, value string) []string {
 		}
 	}
 	return append(values, value)
-}
-func uniqueChange(values []Change, c Change) []Change {
-	for i, v := range values {
-		if v.Kind == c.Kind && v.From == c.From && v.To == c.To {
-			if c.Status == RequiresChange && v.Status != RequiresChange {
-				values[i] = c
-			}
-			return values
-		}
-	}
-	return append(values, c)
 }

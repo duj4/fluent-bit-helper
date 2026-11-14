@@ -13,22 +13,31 @@
  </nav>
  <main class="site-page">
   <header class="page-heading">
-   <div><span class="eyebrow">Windows Exporter / Upgrade impact</span><h1>Find the queries that need attention.</h1><p>Analyze Grafana exports to locate metric, label, unit and type changes in dashboard panels and managed alerts.</p><span class="version-pill">0.31.x → 0.32.1</span> <a class="source-link" href="https://github.com/prometheus-community/windows_exporter/blob/v0.32.1/docs/upgrade/0.32.md" target="_blank" rel="noopener noreferrer">Official upgrade guide ↗</a></div>
+   <div><span class="eyebrow">Windows Exporter / Upgrade impact</span><h1>Find the metrics that need attention.</h1><p>Match Dashboard and Alert metric inventories to upgrade rules. Review metric renames, removals and static label, unit and type notices.</p><span class="version-pill">0.31.x → 0.32.1</span> <a class="source-link" href="https://github.com/prometheus-community/windows_exporter/blob/v0.32.1/docs/upgrade/0.32.md" target="_blank" rel="noopener noreferrer">Official upgrade guide ↗</a></div>
    <button id="themeToggleBtn" class="secondary" type="button">Light mode</button>
   </header>
   <form id="analyzeForm" class="card">
-   <h2>Upload your Grafana exports</h2>
+   <h2>Upload your metric inventory and alerts</h2>
    <div class="upload-grid">
     <div class="upload-box">
-     <label for="dashboardsFile"><strong>Dashboard JSON</strong><small>Kubernetes-style DashboardList, including nested panels.</small></label>
+     <label for="dashboardsFile"><strong>Dashboard JSON</strong><small>Mimirtool JSON with dashboards[] and per-dashboard metrics.</small></label>
      <input id="dashboardsFile" name="dashboards" type="file" accept=".json,application/json">
      <details class="export-help">
       <summary>How to export JSON</summary>
-      <pre class="query-code"><code>curl -fsS \
-  -H 'Authorization: Bearer &lt;token&gt;' \
-  'https://&lt;grafana_host&gt;/apis/dashboard.grafana.app/v1/namespaces/org-&lt;org_id&gt;/dashboards' \
-  -o dashboards.json</code></pre>
-      <p>Replace <code>&lt;org_id&gt;</code> with your Grafana Organization ID. For the default organization (Org ID 1), use <code>default</code> instead of <code>org-&lt;org_id&gt;</code>.</p>
+      <p>Download <a class="source-link" href="https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/#installation" target="_blank" rel="noopener noreferrer">Mimirtool</a> for your operating system and architecture, make it executable and available on your PATH. On a Linux amd64 machine that can access Grafana, run:</p>
+      <pre class="query-code"><code>mimirtool-linux-amd64 analyze grafana \
+  --address="https://&lt;grafana-host&gt;" \
+  --key="&lt;GRAFANA_TOKEN&gt;" \
+  --output="&lt;your-filename&gt;.json"</code></pre>
+      <p>Replace the Grafana URL with the actual address for your environment and the API token placeholder with your token. HTTPS uses port 443 by default; no port is needed in the URL. For a non-standard port, append <code>:&lt;port&gt;</code> to the Grafana host. Choose your own output filename in <code>--output</code>, then upload the generated JSON using the Dashboard JSON control above. For other platforms, use the corresponding Mimirtool executable name.</p>
+      <pre class="query-code"><code>{
+  "metricsUsed": ["metric_a"],
+  "dashboards": [{
+    "uid": "example-dashboard", "title": "Example Dashboard",
+    "metrics": ["metric_a"]
+  }]
+}</code></pre>
+      <p>Each dashboard must include its own metric list. The global <code>metricsUsed</code> list does not replace per-dashboard metrics.</p>
      </details>
     </div>
     <div class="upload-box">
@@ -50,13 +59,7 @@
   </form>
   <section id="analysisResults" hidden aria-label="Analysis results">
    <div class="results-title"><h2>Analysis results</h2><button id="exportResultsBtn" class="secondary" type="button">Download report JSON</button></div>
-   <div class="status-definitions">
-    <p><strong>Needs Change</strong> — The analyzer identified a change that requires updating the query or its migration configuration.</p>
-    <p><strong>Needs Review</strong> — A potential upgrade impact requires manual verification. A change may not be necessary.</p>
-    <p>A query can need both a change and a review.</p>
-   </div>
    <div id="analysisSummary" class="analysis-summary"></div>
-   <div id="analysisBanner" class="analysis-banner"></div>
    <div id="analysisIssues"></div>
    <div id="dashboardResults"></div><div id="alertResults"></div>
   </section>

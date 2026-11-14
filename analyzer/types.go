@@ -1,7 +1,5 @@
-// Package analyzer performs read-only impact analysis for the reviewed Windows exporter upgrade.
+// Package analyzer inventories metric names and matches the frozen upgrade rules.
 package analyzer
-
-import "encoding/json"
 
 type Status string
 
@@ -11,13 +9,18 @@ const (
 	NoImpact       Status = "no_impact"
 )
 
+// A Change is a static rule notice. Only unconditional metric identity changes
+// require a change; labels, units, types and conditional rules need manual checks.
 type Change struct {
-	Kind        string   `json:"kind"`
-	Status      Status   `json:"status"`
-	From        string   `json:"from,omitempty"`
-	To          string   `json:"to,omitempty"`
-	Factor      *float64 `json:"factor,omitempty"`
-	Description string   `json:"description"`
+	Kind        string            `json:"kind"`
+	Status      Status            `json:"status"`
+	RuleMetric  string            `json:"rule_metric"`
+	From        string            `json:"from,omitempty"`
+	To          string            `json:"to,omitempty"`
+	Label       string            `json:"label,omitempty"`
+	Factor      *float64          `json:"factor,omitempty"`
+	Conditional bool              `json:"conditional,omitempty"`
+	Conditions  map[string]string `json:"conditions,omitempty"`
 }
 
 type Finding struct {
@@ -25,48 +28,35 @@ type Finding struct {
 	Status           Status   `json:"status"`
 	NewMetrics       []string `json:"new_metrics,omitempty"`
 	ReplacementQuery string   `json:"replacement_query,omitempty"`
-	Functions        []string `json:"functions,omitempty"`
 	Changes          []Change `json:"changes"`
 	Notes            []string `json:"notes,omitempty"`
 }
 
-type QueryResult struct {
-	RefID    string    `json:"ref_id"`
-	Expr     string    `json:"expr"`
-	Status   Status    `json:"status"`
-	Complete bool      `json:"complete"`
-	Findings []Finding `json:"findings"`
-	Issues   []string  `json:"issues,omitempty"`
-}
-
-type PanelResult struct {
-	ID      int64         `json:"id"`
-	Title   string        `json:"title"`
-	Queries []QueryResult `json:"queries"`
+// Count is the number of input events summarized by a notice. Informational
+// unsupported panels and skipped data sources do not become migration reviews.
+type CoverageNotice struct {
+	Kind      string `json:"kind"`
+	Message   string `json:"message"`
+	Count     int    `json:"count"`
+	Uncertain bool   `json:"uncertain"`
 }
 
 type DashboardResult struct {
-	UID    string        `json:"uid"`
-	Title  string        `json:"title"`
-	Panels []PanelResult `json:"panels"`
-}
-
-type ExpressionContext struct {
-	RefID      string          `json:"ref_id"`
-	Type       string          `json:"type"`
-	Expression string          `json:"expression,omitempty"`
-	Reducer    string          `json:"reducer,omitempty"`
-	Conditions json.RawMessage `json:"conditions,omitempty"`
+	UID      string           `json:"uid"`
+	Title    string           `json:"title"`
+	Status   Status           `json:"status"`
+	Metrics  []string         `json:"metrics"`
+	Findings []Finding        `json:"findings"`
+	Coverage []CoverageNotice `json:"coverage"`
 }
 
 type AlertResult struct {
-	UID         string              `json:"uid"`
-	Title       string              `json:"title"`
-	FolderUID   string              `json:"folder_uid,omitempty"`
-	RuleGroup   string              `json:"rule_group,omitempty"`
-	Condition   string              `json:"condition,omitempty"`
-	Queries     []QueryResult       `json:"queries"`
-	Expressions []ExpressionContext `json:"expressions,omitempty"`
+	UID      string           `json:"uid"`
+	Title    string           `json:"title"`
+	Status   Status           `json:"status"`
+	Metrics  []string         `json:"metrics"`
+	Findings []Finding        `json:"findings"`
+	Coverage []CoverageNotice `json:"coverage"`
 }
 
 type Issue struct {
@@ -75,17 +65,24 @@ type Issue struct {
 	Message  string `json:"message"`
 }
 
+// Global metric counts are unique names across both inputs. Change/notice counts
+// are individual rule items per resource; a repeated resource/metric is counted once.
 type Stats struct {
-	Dashboards     int `json:"dashboards"`
-	Panels         int `json:"panels"`
-	AlertRules     int `json:"alert_rules"`
-	Queries        int `json:"queries"`
-	SkippedQueries int `json:"skipped_queries"`
-	RequiresChange int `json:"requires_change"`
-	Review         int `json:"review"`
+	Dashboards         int `json:"dashboards"`
+	AlertRules         int `json:"alert_rules"`
+	UniqueMetrics      int `json:"unique_metrics"`
+	AffectedDashboards int `json:"affected_dashboards"`
+	AffectedAlerts     int `json:"affected_alerts"`
+	MatchedMetrics     int `json:"matched_metrics"`
+	MetricFindings     int `json:"metric_findings"`
+	RequiresChange     int `json:"requires_change"`
+	Review             int `json:"review"`
+	CoverageWarnings   int `json:"coverage_warnings"`
+	ParsedQueries      int `json:"parsed_queries"`
 }
 
 type Report struct {
+	SchemaVersion int               `json:"schema_version"`
 	Source        string            `json:"source"`
 	Target        string            `json:"target"`
 	Reference     string            `json:"reference"`
@@ -95,7 +92,6 @@ type Report struct {
 	Dashboards    []DashboardResult `json:"dashboards"`
 	Alerts        []AlertResult     `json:"alerts"`
 	Issues        []Issue           `json:"issues"`
-	parsedQueries int
 }
 
 func combine(a, b Status) Status {

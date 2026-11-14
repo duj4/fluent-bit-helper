@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+ <title>Metrics Analyzer · Fluent Bit Helper</title>
+ <script src="/static/common.js"></script>
+ <link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/common.css">
+</head>
+<body>
+ <nav class="site-nav" aria-label="Main navigation">
+  <a class="site-brand" href="/">Fluent Bit Helper</a>
+  <a href="/metrics-analyzer" aria-current="page">Metrics Analyzer</a>
+ </nav>
+ <main class="site-page">
+  <header class="page-heading">
+   <div><span class="eyebrow">Windows Exporter / Upgrade impact</span><h1>Find the metrics that need attention.</h1><p>Match Dashboard and Alert metric inventories to upgrade rules. Review metric renames, removals and static label, unit and type notices.</p><span class="version-pill">0.31.x → 0.32.1</span> <a class="source-link" href="https://github.com/prometheus-community/windows_exporter/blob/v0.32.1/docs/upgrade/0.32.md" target="_blank" rel="noopener noreferrer">Official upgrade guide ↗</a></div>
+   <button id="themeToggleBtn" class="secondary" type="button">Light mode</button>
+  </header>
+  <form id="analyzeForm" class="card">
+   <h2>Upload your metric inventory and alerts</h2>
+   <div class="upload-grid">
+    <div class="upload-box">
+     <label for="dashboardsFile"><strong>Dashboard JSON</strong><small>Mimirtool JSON with dashboards[] and per-dashboard metrics.</small></label>
+     <input id="dashboardsFile" name="dashboards" type="file" accept=".json,application/json">
+     <details class="export-help">
+      <summary>How to export JSON</summary>
+      <p>Download <a class="source-link" href="https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/#installation" target="_blank" rel="noopener noreferrer">Mimirtool</a> for your operating system and architecture, make it executable and available on your PATH. On a Linux amd64 machine that can access Grafana, run:</p>
+      <pre class="query-code"><code>mimirtool-linux-amd64 analyze grafana \
+  --address="https://&lt;grafana-host&gt;" \
+  --key="&lt;GRAFANA_TOKEN&gt;" \
+  --output="&lt;your-filename&gt;.json"</code></pre>
+      <p>Replace the Grafana URL with the actual address for your environment and the API token placeholder with your token. HTTPS uses port 443 by default; no port is needed in the URL. For a non-standard port, append <code>:&lt;port&gt;</code> to the Grafana host. Choose your own output filename in <code>--output</code>, then upload the generated JSON using the Dashboard JSON control above. For other platforms, use the corresponding Mimirtool executable name.</p>
+      <pre class="query-code"><code>{
+  "metricsUsed": ["metric_a"],
+  "dashboards": [{
+    "uid": "example-dashboard", "title": "Example Dashboard",
+    "metrics": ["metric_a"]
+  }]
+}</code></pre>
+      <p>Each dashboard must include its own metric list. The global <code>metricsUsed</code> list does not replace per-dashboard metrics.</p>
+     </details>
+    </div>
+    <div class="upload-box">
+     <label for="alertsFile"><strong>Alert Rule JSON</strong><small>Grafana-managed provisioning alert rule array.</small></label>
+     <input id="alertsFile" name="alert_rules" type="file" accept=".json,application/json">
+     <details class="export-help">
+      <summary>How to export JSON</summary>
+      <pre class="query-code"><code>curl -fsS \
+  -H 'Authorization: Bearer &lt;token&gt;' \
+  'https://&lt;grafana_host&gt;/api/v1/provisioning/alert-rules' \
+  -o alert-rules.json</code></pre>
+      <p>Export Grafana-managed Alert Rules as JSON. Do not append <code>/export</code> to the API endpoint.</p>
+     </details>
+    </div>
+   </div>
+   <p class="privacy-note">Run export commands locally with a read-only token. Keep real tokens out of shared logs and command history. <code>-fsS</code> checks HTTP errors and shows failures in silent mode.</p>
+   <p class="privacy-note">Upload either file or both. JSON only, up to 8 MiB each. No API token is needed and this service does not connect to Grafana. Files are analyzed in server memory; dashboards, alerts and queries are never automatically modified.</p>
+   <div class="analyze-actions"><button id="analyzeBtn" type="submit">Analyze upgrade impact</button><p id="analysisStatus" role="status" aria-live="polite">Choose at least one JSON file to begin.</p></div>
+  </form>
+  <section id="analysisResults" hidden aria-label="Analysis results">
+   <div class="results-title"><h2>Analysis results</h2><button id="exportResultsBtn" class="secondary" type="button">Download report JSON</button></div>
+   <div id="analysisSummary" class="analysis-summary"></div>
+   <div id="analysisIssues"></div>
+   <div id="dashboardResults"></div><div id="alertResults"></div>
+  </section>
+ </main>
+ <script src="/static/metrics.js"></script>
+</body>
+</html>
