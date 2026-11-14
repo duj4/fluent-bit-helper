@@ -24,12 +24,18 @@
      <input id="dashboardsFile" name="dashboards" type="file" accept=".json,application/json">
      <details class="export-help">
       <summary>How to export JSON</summary>
-      <p>Download <a class="source-link" href="https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/#installation" target="_blank" rel="noopener noreferrer">Mimirtool</a> for your operating system and architecture, make it executable and available on your PATH. On a Linux amd64 machine that can access Grafana, run:</p>
-      <pre class="query-code"><code>mimirtool-linux-amd64 analyze grafana \
-  --address="https://&lt;grafana-host&gt;" \
-  --key="&lt;GRAFANA_TOKEN&gt;" \
+      <p>Download <a class="source-link" href="https://github.com/grafana/mimir/releases/latest/download/mimirtool-windows-amd64.exe" target="_blank" rel="noopener noreferrer">Mimirtool for Windows (x64)</a> on your Windows laptop that can access your Production Grafana. You do not need to log in to the Production server. From the folder containing the executable, run either command:</p>
+      <p><strong>PowerShell</strong></p>
+      <pre class="query-code"><code>.\mimirtool-windows-amd64.exe analyze grafana `
+  --address="https://&lt;grafana-host&gt;" `
+  --key="&lt;GRAFANA_TOKEN&gt;" `
   --output="&lt;your-filename&gt;.json"</code></pre>
-      <p>Replace the Grafana URL with the actual address for your environment and the API token placeholder with your token. HTTPS uses port 443 by default; no port is needed in the URL. For a non-standard port, append <code>:&lt;port&gt;</code> to the Grafana host. Choose your own output filename in <code>--output</code>, then upload the generated JSON using the Dashboard JSON control above. For other platforms, use the corresponding Mimirtool executable name.</p>
+      <p><strong>CMD</strong></p>
+      <pre class="query-code"><code>mimirtool-windows-amd64.exe analyze grafana ^
+  --address="https://&lt;grafana-host&gt;" ^
+  --key="&lt;GRAFANA_TOKEN&gt;" ^
+  --output="&lt;your-filename&gt;.json"</code></pre>
+      <p>Choose your own output filename in <code>--output</code>, then upload the generated JSON using the Dashboard JSON control above.</p>
       <pre class="query-code"><code>{
   "metricsUsed": ["metric_a"],
   "dashboards": [{
@@ -45,11 +51,18 @@
      <input id="alertsFile" name="alert_rules" type="file" accept=".json,application/json">
      <details class="export-help">
       <summary>How to export JSON</summary>
-      <pre class="query-code"><code>curl -fsS \
-  -H 'Authorization: Bearer &lt;token&gt;' \
-  'https://&lt;grafana_host&gt;/api/v1/provisioning/alert-rules' \
-  -o alert-rules.json</code></pre>
-      <p>Export Grafana-managed Alert Rules as JSON. Do not append <code>/export</code> to the API endpoint.</p>
+      <p>On your Windows laptop that can access Grafana, run either command to export Grafana-managed Alert Rules as JSON. No Production server login is required.</p>
+      <p><strong>PowerShell</strong></p>
+      <pre class="query-code"><code>curl.exe -fsS `
+  -H "Authorization: Bearer &lt;GRAFANA_TOKEN&gt;" `
+  "https://&lt;grafana-host&gt;/api/v1/provisioning/alert-rules" `
+  -o "&lt;your-filename&gt;.json"</code></pre>
+      <p><strong>CMD</strong></p>
+      <pre class="query-code"><code>curl.exe -fsS ^
+  -H "Authorization: Bearer &lt;GRAFANA_TOKEN&gt;" ^
+  "https://&lt;grafana-host&gt;/api/v1/provisioning/alert-rules" ^
+  -o "&lt;your-filename&gt;.json"</code></pre>
+      <p>Choose your own output filename with <code>-o</code>, then upload the generated JSON using the Alert Rule JSON control above. Do not append <code>/export</code> to the API endpoint.</p>
      </details>
     </div>
    </div>
