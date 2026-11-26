@@ -17,8 +17,7 @@ import (
 //go:embed static/*
 var staticFiles embed.FS
 
-// const listenAddr = ":8443"
-const listenAddr = ":8080"
+const listenAddr = ":8443"
 
 // NewRouter builds the tool pages and APIs with one verified migration rule set.
 func NewRouter() (*gin.Engine, error) {
@@ -56,20 +55,19 @@ func NewRouter() (*gin.Engine, error) {
 	return r, nil
 }
 
-// Run starts the tool service using the existing listen address.
+// Run starts the tool service over TLS using certificates from the working directory.
 func Run() error {
 	r, err := NewRouter()
 	if err != nil {
 		return err
 	}
 
-	// certFilePath, keyFilePath, err := loadTLSFiles()
-	// if err != nil {
-	// 	return err
-	// }
+	certFilePath, keyFilePath, err := loadTLSFiles()
+	if err != nil {
+		return err
+	}
 
-	// return r.RunTLS(listenAddr, certFilePath, keyFilePath)
-	return r.Run(listenAddr)
+	return r.RunTLS(listenAddr, certFilePath, keyFilePath)
 }
 
 // loadTLSFiles loads TLS related files from working directory
