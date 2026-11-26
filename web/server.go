@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"fluent-bit-helper/analyzer"
+	migrationrules "fluent-bit-helper/migration-rules"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,6 +29,12 @@ func NewRouter() (*gin.Engine, error) {
 	r := gin.Default()
 	registerAPI(r)
 	r.POST("/api/metrics-analyzer/analyze", metricsHandler(engine))
+	// Serve the exact embedded bytes verified by analyzer.New above.
+	rulesJSON := migrationrules.JSON()
+	r.Match([]string{http.MethodGet, http.MethodHead}, "/api/metrics-analyzer/rules", func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Data(http.StatusOK, "application/json; charset=utf-8", rulesJSON)
+	})
 
 	staticFS, err := fs.Sub(staticFiles, "static")
 	if err != nil {
@@ -35,7 +42,7 @@ func NewRouter() (*gin.Engine, error) {
 	}
 
 	r.StaticFS("/static", http.FS(staticFS))
-	for path, file := range map[string]string{"/": "index.html", "/metrics-analyzer": "metrics.html"} {
+	for path, file := range map[string]string{"/": "index.html", "/metrics-analyzer": "metrics.html", "/metrics-analyzer/rules": "rules.html"} {
 		content, err := fs.ReadFile(staticFS, file)
 		if err != nil {
 			return nil, err

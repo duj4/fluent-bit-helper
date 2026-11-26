@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+ <title>Migration Rules · Fluent Bit Helper</title>
+ <script src="/static/common.js"></script>
+ <link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/common.css">
+ <link rel="stylesheet" href="/static/rules.css">
+</head>
+<body>
+ <nav class="site-nav" aria-label="Main navigation">
+  <a class="site-brand" href="/">Fluent Bit Helper</a>
+  <a href="/metrics-analyzer">Metrics Analyzer</a>
+  <a href="/metrics-analyzer/rules" aria-current="page">Migration rules</a>
+ </nav>
+ <main class="site-page rules-page">
+  <a class="source-link rules-back" href="/metrics-analyzer">← Back to upgrade analyzer</a>
+  <header class="page-heading">
+   <div><span class="eyebrow">Windows Exporter / Migration reference</span><h1>Your migration rules, in one place.</h1><p>Look up metric renames, removals and changes to labels, units and types. These are the same rules used by the upgrade analyzer.</p>
+    <div class="reference-links"><span class="version-pill" id="rulesVersion">Loading version…</span><a class="source-link" href="/api/metrics-analyzer/rules" download="windows-exporter-migration-rules.json">Download rules JSON ↓</a><a class="source-link" id="officialGuide" href="https://github.com/prometheus-community/windows_exporter/blob/v0.32.1/docs/upgrade/0.32.md" target="_blank" rel="noopener noreferrer">Official upgrade guide ↗</a></div>
+   </div>
+   <button id="themeToggleBtn" class="secondary" type="button">Light mode</button>
+  </header>
+  <section class="rules-workspace" aria-label="Migration rule browser" aria-busy="true" id="rulesWorkspace">
+   <div class="rules-toolbar">
+    <div class="rules-search-row">
+     <label class="rules-search" for="ruleSearch"><span>Find a metric or change</span><input id="ruleSearch" type="search" placeholder="Search old or new metric names, labels, or notes…" autocomplete="off" disabled></label>
+     <button id="clearRules" class="secondary" type="button" disabled>Clear filters</button>
+    </div>
+    <div class="rules-filters" id="ruleFilters" role="group" aria-label="Filter by change type"></div>
+    <div class="rules-results-line"><p id="rulesStatus" role="status" aria-live="polite">Loading migration rules…</p><span>One rule can include several changes.</span></div>
+   </div>
+   <div class="rules-table-wrap" id="rulesTableWrap" hidden>
+    <table class="rules-table">
+     <caption class="rules-sr-only">Migration rules matching the current search and change filter</caption>
+     <thead><tr><th scope="col">Metric mapping</th><th scope="col">What changes</th><th scope="col">Migration advice</th></tr></thead>
+     <tbody id="ruleRows"></tbody>
+    </table>
+   </div>
+   <div class="rules-empty" id="rulesEmpty" hidden><h2>No matching rules</h2><p>Try a shorter metric name or clear the filters to browse all rules.</p></div>
+   <div class="rules-empty" id="rulesError" hidden><h2>Could not load the rules</h2><p>Try again, or download the rules JSON using the link above.</p><button class="secondary" id="retryRules" type="button">Try again</button></div>
+   <nav class="rules-pagination" id="rulesPagination" aria-label="Rules pagination" hidden><span id="rulesPageLabel"></span><div><button class="secondary" id="previousRules" type="button">← Previous</button><button class="secondary" id="nextRules" type="button">Next →</button></div></nav>
+  </section>
+  <p class="rules-footnote">This reference covers the metric changes included in the analyzer. For installation, collector configuration and other upgrade steps, consult the official upgrade guide.</p>
+  <noscript><p class="analysis-banner">Enable JavaScript to search the reference, or <a class="source-link" href="/api/metrics-analyzer/rules">open the rules JSON</a>.</p></noscript>
+ </main>
+ <script src="/static/rules.js"></script>
+</body>
+</html>

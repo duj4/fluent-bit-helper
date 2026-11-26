@@ -1,0 +1,66 @@
+.rules-page { max-width: 1400px; }
+.rules-back { display: inline-block; margin-bottom: 26px; font-size: 13px; text-decoration: none; }
+.rules-page .page-heading h1 { margin-top: 10px; }
+.rules-page .page-heading p { margin-bottom: 22px; }
+.rules-page #themeToggleBtn { flex-shrink: 0; }
+.rules-workspace { border: 1px solid var(--border); background: var(--panel); border-radius: 16px; overflow: hidden; }
+.rules-toolbar { padding: 24px 24px 0; }
+.rules-search-row { display: flex; align-items: flex-end; gap: 16px; }
+.rules-search { flex: 1; margin: 0; color: var(--text); font-weight: 600; }
+.rules-search input { margin-top: 3px; font-weight: 400; padding: 13px 14px; }
+.rules-search-row button { margin-bottom: 2px; flex-shrink: 0; min-height: 42px; }
+.rules-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 20px 0; }
+.rules-filter { display: inline-flex; align-items: center; gap: 9px; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 8px; padding: 8px 12px; font-size: 12px; }
+.rules-filter span { font-variant-numeric: tabular-nums; opacity: .8; }
+.rules-filter:hover { color: var(--text); border-color: var(--muted); background: var(--card); }
+.rules-filter[aria-pressed="true"] { background: var(--card); color: var(--accent); border-color: var(--accent); }
+.rules-results-line { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 12px; padding: 0 0 18px; }
+.rules-results-line p { margin: 0; color: var(--text); }
+.rules-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+.rules-table th { width: 32%; text-align: left; background: var(--card); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; padding: 15px 24px; border-block: 1px solid var(--border); }
+.rules-table th:first-child { width: 36%; }
+.rules-table td { vertical-align: top; border-bottom: 1px solid var(--border); padding: 24px; line-height: 1.7; overflow-wrap: anywhere; }
+.rules-table tr:last-child td { border-bottom: 0; }
+.rules-table tbody tr:hover { background: var(--card); }
+.rules-table code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+.rules-metric { display: block; color: var(--text); font-weight: 600; line-height: 1.8; }
+.rules-target { color: var(--accent); }
+.rules-mapping-arrow { display: block; color: var(--muted); margin: 5px 0; font-size: 15px; }
+.rules-aliases { margin-top: 15px; font-size: 11px; color: var(--muted); }
+.rules-aliases summary { cursor: pointer; }
+.rules-aliases code { display: block; font-size: 11px; margin-top: 4px; }
+.rules-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.rules-tag { display: inline-block; border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px; font-size: 10px; line-height: 1.6; font-weight: 600; color: var(--accent); background: var(--card); }
+.rules-tag[data-kind="removed"], .rules-tag[data-kind="unit"], .rules-tag[data-kind="type"] { color: var(--warn); }
+.rules-detail { margin: 9px 0 0; color: var(--muted); }
+.rules-detail strong { color: var(--text); font-weight: 500; }
+.rules-detail code { color: var(--text); }
+.rules-condition { padding: 10px 12px; border-left: 2px solid var(--warn); background: var(--preview-bg); border-radius: 0 6px 6px 0; }
+.rules-advice { margin: 0; color: var(--muted); }
+.rules-replacement-label { display: block; margin-top: 14px; color: var(--text); font-size: 11px; font-weight: 600; }
+.rules-table .query-code { margin: 7px 0 0; padding: 10px; font-size: 11px; }
+.rules-empty { padding: 44px 24px; text-align: center; }
+.rules-empty h2 { font-size: 18px; margin: 0 0 10px; }
+.rules-empty p { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.rules-pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; padding: 18px 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+.rules-pagination div { display: flex; gap: 8px; }
+.rules-pagination button { font-size: 12px; }
+.rules-page button:disabled { opacity: .45; cursor: default; }
+.rules-footnote { font-size: 12px; color: var(--muted); line-height: 1.8; margin-top: 20px; }
+.rules-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.rules-page a:focus-visible, .rules-page button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+@media (max-width: 760px) {
+ .rules-back { margin-bottom: 20px; }
+ .rules-toolbar { padding: 18px 16px 0; }
+ .rules-search-row { flex-wrap: wrap; gap: 10px; }
+ .rules-search { flex-basis: 100%; }
+ .rules-search-row button { min-height: 36px; font-size: 12px; }
+ .rules-filters { gap: 6px; padding: 16px 0; }
+ .rules-filter { padding: 7px 9px; font-size: 11px; }
+ .rules-table, .rules-table tbody, .rules-table tr, .rules-table td { display: block; width: 100%; }
+ .rules-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+ .rules-table tr { padding: 20px 16px; border-top: 1px solid var(--border); }
+ .rules-table td { padding: 0; border: 0; }
+ .rules-table td + td { margin-top: 18px; }
+ .rules-pagination { padding: 16px; }
+}
